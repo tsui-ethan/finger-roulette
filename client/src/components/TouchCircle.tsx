@@ -19,8 +19,26 @@ export const TouchCircle = ({
 }: TouchCircleProps) => {
   const handlePointerDown = (event: React.PointerEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     if (onTouch) {
       onTouch(id, event.clientX, event.clientY);
+    }
+  };
+
+  const handleMouseDown = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (onTouch) {
+      onTouch(id, event.clientX, event.clientY);
+    }
+  };
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (onTouch && event.touches.length > 0) {
+      const touch = event.touches[0];
+      onTouch(id, touch.clientX, touch.clientY);
     }
   };
   
@@ -43,6 +61,8 @@ export const TouchCircle = ({
         fontSize: `${size / 4}px`
       }}
       onPointerDown={handlePointerDown}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       data-circle-id={id}
     >
       {selected && (

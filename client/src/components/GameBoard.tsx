@@ -103,7 +103,19 @@ export const GameBoard = () => {
     };
   }, []);
   
-  // Touch event handlers
+  // Direct circle touch handler
+  const handleCircleTouch = useCallback((circleId: number, x: number, y: number) => {
+    if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
+    
+    // Use a unique touch ID for direct touches (starting from 1000 to avoid conflicts)
+    const touchId = 1000 + circleId + Date.now();
+    addTouch(touchId, circleId, x, y);
+    playHit(); // Play touch feedback sound
+    
+    console.log(`Circle ${circleId + 1} touched at (${x}, ${y})`);
+  }, [phase, addTouch, playHit]);
+
+  // Touch event handlers for multi-touch
   const handleTouchStart = useCallback((touches: TouchList, event: TouchEvent) => {
     if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
     
@@ -186,6 +198,7 @@ export const GameBoard = () => {
           selected={circle.selected}
           position={circlePositions[index]}
           size={CIRCLE_SIZE}
+          onTouch={handleCircleTouch}
         />
       ))}
       
