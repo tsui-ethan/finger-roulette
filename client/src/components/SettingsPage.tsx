@@ -37,8 +37,8 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-800 to-zinc-900 p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-800 to-zinc-900 p-4 overflow-y-auto">
+      <div className="max-w-2xl mx-auto pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <Button
