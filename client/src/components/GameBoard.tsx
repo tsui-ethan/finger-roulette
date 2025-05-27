@@ -12,16 +12,20 @@ export const GameBoard = () => {
     phase, 
     circles, 
     countdownTime,
+    autoStartTimer,
     initializeGame, 
     addTouch, 
     removeTouch, 
     selectWinner,
-    setCountdownTime
+    setCountdownTime,
+    setAutoStartTimer,
+    forceStart
   } = useGameState();
   
   const { playHit, playSuccess } = useAudio();
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoStartRef = useRef<NodeJS.Timeout | null>(null);
   
   // Initialize game on mount
   useEffect(() => {
@@ -41,6 +45,24 @@ export const GameBoard = () => {
     return { x, y };
   });
   
+  // Handle auto-start timer
+  useEffect(() => {
+    if (phase === "ready" && autoStartTimer > 0) {
+      autoStartRef.current = setTimeout(() => {
+        setAutoStartTimer(autoStartTimer - 1);
+        playHit(); // Play tick sound
+      }, 1000);
+    } else if (phase === "ready" && autoStartTimer === 0) {
+      forceStart(); // Auto-start the game
+    }
+    
+    return () => {
+      if (autoStartRef.current) {
+        clearTimeout(autoStartRef.current);
+      }
+    };
+  }, [phase, autoStartTimer, setAutoStartTimer, forceStart, playHit]);
+
   // Handle countdown timer
   useEffect(() => {
     if (phase === "countdown" && countdownTime > 0) {
@@ -75,12 +97,15 @@ export const GameBoard = () => {
       if (selectionTimeoutRef.current) {
         clearTimeout(selectionTimeoutRef.current);
       }
+      if (autoStartRef.current) {
+        clearTimeout(autoStartRef.current);
+      }
     };
   }, []);
   
   // Touch event handlers
   const handleTouchStart = useCallback((touches: TouchList, event: TouchEvent) => {
-    if (phase !== "waiting" && phase !== "countdown") return;
+    if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
     
     for (let i = 0; i < touches.length; i++) {
       const touch = touches[i];
@@ -116,6 +141,8 @@ export const GameBoard = () => {
     switch (phase) {
       case "waiting":
         return "from-purple-900 via-purple-800 to-indigo-900";
+      case "ready":
+        return "from-green-900 via-emerald-800 to-teal-900";
       case "countdown":
         return "from-yellow-900 via-orange-800 to-red-900";
       case "selection":
