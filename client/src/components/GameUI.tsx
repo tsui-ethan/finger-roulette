@@ -2,11 +2,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useAudio } from "@/lib/stores/useAudio";
-import { Volume2, VolumeX, RotateCcw } from "lucide-react";
+import { useDareLog } from "@/lib/stores/useDareLog";
+import { Volume2, VolumeX, RotateCcw, BarChart3, Settings } from "lucide-react";
 
-export const GameUI = () => {
+interface GameUIProps {
+  onShowLog?: () => void;
+  onShowSettings?: () => void;
+}
+
+export const GameUI = ({ onShowLog, onShowSettings }: GameUIProps) => {
   const { phase, countdownTime, selectedCircle, autoStartTimer, resetGame, forceStart } = useGameState();
   const { isMuted, toggleMute } = useAudio();
+  const { addDare, checkAndResetIfNeeded } = useDareLog();
   
   const getInstructionText = () => {
     switch (phase) {
@@ -54,9 +61,20 @@ export const GameUI = () => {
               {getInstructionText()}
             </h1>
             {phase === "reveal" && selectedCircle !== null && (
-              <p className="text-lg md:text-xl text-red-100 mt-2 animate-bounce">
-                🎯 Do the dare! 🎯
-              </p>
+              <div className="space-y-2">
+                <p className="text-lg md:text-xl text-red-100 mt-2 animate-bounce">
+                  🎯 Do the dare! 🎯
+                </p>
+                <Button
+                  onClick={() => {
+                    addDare(selectedCircle);
+                    resetGame();
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
+                >
+                  ✅ Dare Completed!
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -64,6 +82,26 @@ export const GameUI = () => {
       
       {/* Control buttons */}
       <div className="absolute top-8 right-8 flex flex-col gap-2 pointer-events-auto">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onShowLog}
+          className="bg-black/60 border-white/20 text-white hover:bg-white/20"
+          title="View Dare Log"
+        >
+          <BarChart3 className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onShowSettings}
+          className="bg-black/60 border-white/20 text-white hover:bg-white/20"
+          title="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+        
         <Button
           variant="outline"
           size="icon"

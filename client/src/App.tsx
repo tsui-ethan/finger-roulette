@@ -1,9 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GameBoard } from "@/components/GameBoard";
 import { GameUI } from "@/components/GameUI";
+import { LogPage } from "@/components/LogPage";
+import { SettingsPage } from "@/components/SettingsPage";
 import { useAudio } from "@/lib/stores/useAudio";
+import { useDareLog } from "@/lib/stores/useDareLog";
 import "@fontsource/inter";
+
+type AppPage = "game" | "log" | "settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,13 +50,38 @@ const AudioLoader = () => {
 };
 
 function App() {
+  const [currentPage, setCurrentPage] = useState<AppPage>("game");
+  const { checkAndResetIfNeeded } = useDareLog();
+
+  // Check for automatic resets on app load
+  useEffect(() => {
+    checkAndResetIfNeeded();
+  }, [checkAndResetIfNeeded]);
+
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case "log":
+        return <LogPage onBack={() => setCurrentPage("game")} />;
+      case "settings":
+        return <SettingsPage onBack={() => setCurrentPage("game")} />;
+      case "game":
+      default:
+        return (
+          <div className="w-full h-full relative font-sans antialiased">
+            <GameBoard />
+            <GameUI 
+              onShowLog={() => setCurrentPage("log")}
+              onShowSettings={() => setCurrentPage("settings")}
+            />
+          </div>
+        );
+    }
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="w-full h-full relative font-sans antialiased">
-        <AudioLoader />
-        <GameBoard />
-        <GameUI />
-      </div>
+      <AudioLoader />
+      {renderCurrentPage()}
     </QueryClientProvider>
   );
 }
