@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 
-export type GamePhase = "waiting" | "countdown" | "selection" | "reveal";
+export type GamePhase = "waiting" | "ready" | "countdown" | "selection" | "reveal";
 
 interface TouchData {
   id: number;
@@ -16,6 +16,7 @@ interface GameState {
   activeTouches: Map<number, TouchData>;
   selectedCircle: number | null;
   countdownTime: number;
+  autoStartTimer: number;
   
   // Actions
   initializeGame: (circleCount: number) => void;
@@ -25,6 +26,8 @@ interface GameState {
   selectWinner: () => void;
   resetGame: () => void;
   setCountdownTime: (time: number) => void;
+  setAutoStartTimer: (time: number) => void;
+  forceStart: () => void;
 }
 
 export const useGameState = create<GameState>()(
@@ -34,6 +37,7 @@ export const useGameState = create<GameState>()(
     activeTouches: new Map(),
     selectedCircle: null,
     countdownTime: 3,
+    autoStartTimer: 5,
     
     initializeGame: (circleCount: number) => {
       const circles = Array.from({ length: circleCount }, (_, i) => ({
@@ -47,7 +51,8 @@ export const useGameState = create<GameState>()(
         circles,
         activeTouches: new Map(),
         selectedCircle: null,
-        countdownTime: 3
+        countdownTime: 3,
+        autoStartTimer: 5
       });
     },
     
@@ -67,10 +72,10 @@ export const useGameState = create<GameState>()(
         circles: updatedCircles
       });
       
-      // Check if all circles are touched
-      const allTouched = updatedCircles.every(circle => circle.active);
-      if (allTouched && get().phase === "waiting") {
-        get().startCountdown();
+      // Check if at least one circle is touched to enter ready phase
+      const anyTouched = updatedCircles.some(circle => circle.active);
+      if (anyTouched && get().phase === "waiting") {
+        set({ phase: "ready", autoStartTimer: 5 });
       }
     },
     
@@ -97,10 +102,10 @@ export const useGameState = create<GameState>()(
           circles: updatedCircles
         });
         
-        // If we're in countdown and not all circles are touched anymore, go back to waiting
-        const allTouched = updatedCircles.every(circle => circle.active);
-        if (!allTouched && (get().phase === "countdown" || get().phase === "selection")) {
-          set({ phase: "waiting", countdownTime: 3 });
+        // If no circles are touched, go back to waiting
+        const anyTouched = updatedCircles.some(circle => circle.active);
+        if (!anyTouched && (get().phase === "ready" || get().phase === "countdown" || get().phase === "selection")) {
+          set({ phase: "waiting", countdownTime: 3, autoStartTimer: 5 });
         }
       }
     },
@@ -143,12 +148,21 @@ export const useGameState = create<GameState>()(
         circles: resetCircles,
         activeTouches: new Map(),
         selectedCircle: null,
-        countdownTime: 3
+        countdownTime: 3,
+        autoStartTimer: 5
       });
     },
     
     setCountdownTime: (time: number) => {
       set({ countdownTime: time });
+    },
+    
+    setAutoStartTimer: (time: number) => {
+      set({ autoStartTimer: time });
+    },
+    
+    forceStart: () => {
+      set({ phase: "countdown", countdownTime: 3 });
     }
   }))
 );

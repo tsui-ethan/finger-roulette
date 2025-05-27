@@ -5,13 +5,15 @@ import { useAudio } from "@/lib/stores/useAudio";
 import { Volume2, VolumeX, RotateCcw } from "lucide-react";
 
 export const GameUI = () => {
-  const { phase, countdownTime, selectedCircle, resetGame } = useGameState();
+  const { phase, countdownTime, selectedCircle, autoStartTimer, resetGame, forceStart } = useGameState();
   const { isMuted, toggleMute } = useAudio();
   
   const getInstructionText = () => {
     switch (phase) {
       case "waiting":
         return "Everyone put your finger on a circle";
+      case "ready":
+        return `Auto-start in ${autoStartTimer} seconds...`;
       case "countdown":
         return `Get ready... ${countdownTime}`;
       case "selection":
@@ -29,6 +31,8 @@ export const GameUI = () => {
     switch (phase) {
       case "waiting":
         return "text-purple-200";
+      case "ready":
+        return "text-green-200";
       case "countdown":
         return "text-yellow-200";
       case "selection":
@@ -79,11 +83,25 @@ export const GameUI = () => {
         </Button>
       </div>
       
+      {/* Begin button when ready */}
+      {phase === "ready" && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
+          <Button
+            onClick={forceStart}
+            size="lg"
+            className="bg-green-600 hover:bg-green-700 text-white text-2xl px-12 py-8 rounded-full shadow-2xl border-4 border-green-400 animate-pulse"
+          >
+            🚀 BEGIN 🚀
+          </Button>
+        </div>
+      )}
+
       {/* Game phase indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur-sm">
           <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${
             phase === "waiting" ? "bg-purple-400" :
+            phase === "ready" ? "bg-green-400 animate-pulse" :
             phase === "countdown" ? "bg-yellow-400 animate-pulse" :
             phase === "selection" ? "bg-blue-400 animate-spin" :
             "bg-red-400 animate-bounce"
