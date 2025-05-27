@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useDareLog, ResetInterval } from "@/lib/stores/useDareLog";
+import { useGameLog, ResetInterval } from "@/lib/stores/useGameLog";
 import { useAudio } from "@/lib/stores/useAudio";
 import { ArrowLeft, Volume2, VolumeX, RotateCcw, Clock } from "lucide-react";
 

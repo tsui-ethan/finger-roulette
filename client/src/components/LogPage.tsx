@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useDareLog } from "@/lib/stores/useDareLog";
+import { useGameLog } from "@/lib/stores/useGameLog";
 import { ArrowLeft, Trophy, Calendar, RotateCcw } from "lucide-react";
 
 interface LogPageProps {
@@ -9,10 +9,10 @@ interface LogPageProps {
 }
 
 export const LogPage = ({ onBack }: LogPageProps) => {
-  const { getPlayerStats, resetLog, dareHistory } = useDareLog();
+  const { getPlayerStats, resetLog, gameHistory } = useGameLog();
   
   const playerStats = getPlayerStats();
-  const totalDares = dareHistory.length;
+  const totalGames = gameHistory.length;
   
   // Find the player with most dares
   const topPlayer = playerStats.reduce((max, player) => 
