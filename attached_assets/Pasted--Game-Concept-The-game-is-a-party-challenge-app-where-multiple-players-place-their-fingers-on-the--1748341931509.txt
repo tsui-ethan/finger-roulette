@@ -1,0 +1,70 @@
+🎮 Game Concept
+The game is a party challenge app where multiple players place their fingers on the screen. After a suspenseful moment, all but one button disappears — the remaining player is the one who must complete a dare. It's a social, real-time elimination mechanic with tension and surprise.
+
+🧠 Game UI Breakdown
+🖐️ Initial Interaction Phase
+Multi-Touch Buttons:
+
+Multiple circular buttons (roughly 5–10) are shown on screen, evenly distributed across a central area.
+
+Each button is identical in size and style — likely intended for players to each place a finger on one.
+
+Button Design:
+
+Circular with a subtle glow or color shift when pressed.
+
+Button highlights or animates slightly when touched (e.g., soft pulsing glow).
+
+Prompt Text:
+
+A message near the top like "Everyone put your finger on a circle" or "Hold until one remains..."
+
+Stylized, playful font, centered at the top.
+
+⏳ Countdown or Elimination Phase
+After all players have placed their fingers:
+
+A short suspenseful delay (possibly with a sound effect or countdown visual).
+
+Then, all buttons suddenly disappear — except one.
+
+😱 Selection Reveal
+The last remaining circle indicates who has been chosen to do the dare.
+
+This button may:
+
+Flash
+
+Play a sound effect (e.g. buzzer, drumroll)
+
+Enlarge or animate briefly
+
+A text like "You have been chosen!" or "Do the dare!" appears prominently on screen.
+
+🎲 Dare Screen (Possible)
+After selection, the app likely shows:
+
+A randomly generated dare or challenge
+
+Button to "Accept" or "Pass" (with consequences?)
+
+Possibly a dare customization or category setting in a separate menu
+
+🎨 Visual Style
+Color Theme: Bright, vibrant, party-themed palette (neon purples, reds, blues).
+
+Fonts: Bold, rounded, and playful — suitable for a party atmosphere.
+
+Animations: Smooth transitions, button pulsing, disappearing effects with flair.
+
+📱 UX Details
+Touch Handling:
+
+The game clearly supports multi-touch.
+
+Only activates once all circles are touched (or after a timer).
+
+Fairness Mechanic:
+
+Likely includes some randomization logic or timeout to prevent predictability.
+
