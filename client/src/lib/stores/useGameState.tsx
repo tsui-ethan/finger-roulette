@@ -1,0 +1,154 @@
+import { create } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
+
+export type GamePhase = "waiting" | "countdown" | "selection" | "reveal";
+
+interface TouchData {
+  id: number;
+  circleIndex: number;
+  x: number;
+  y: number;
+}
+
+interface GameState {
+  phase: GamePhase;
+  circles: Array<{ id: number; active: boolean; selected: boolean }>;
+  activeTouches: Map<number, TouchData>;
+  selectedCircle: number | null;
+  countdownTime: number;
+  
+  // Actions
+  initializeGame: (circleCount: number) => void;
+  addTouch: (touchId: number, circleIndex: number, x: number, y: number) => void;
+  removeTouch: (touchId: number) => void;
+  startCountdown: () => void;
+  selectWinner: () => void;
+  resetGame: () => void;
+  setCountdownTime: (time: number) => void;
+}
+
+export const useGameState = create<GameState>()(
+  subscribeWithSelector((set, get) => ({
+    phase: "waiting",
+    circles: [],
+    activeTouches: new Map(),
+    selectedCircle: null,
+    countdownTime: 3,
+    
+    initializeGame: (circleCount: number) => {
+      const circles = Array.from({ length: circleCount }, (_, i) => ({
+        id: i,
+        active: false,
+        selected: false
+      }));
+      
+      set({
+        phase: "waiting",
+        circles,
+        activeTouches: new Map(),
+        selectedCircle: null,
+        countdownTime: 3
+      });
+    },
+    
+    addTouch: (touchId: number, circleIndex: number, x: number, y: number) => {
+      const { activeTouches, circles } = get();
+      const newTouches = new Map(activeTouches);
+      newTouches.set(touchId, { id: touchId, circleIndex, x, y });
+      
+      const updatedCircles = circles.map(circle => 
+        circle.id === circleIndex 
+          ? { ...circle, active: true }
+          : circle
+      );
+      
+      set({ 
+        activeTouches: newTouches,
+        circles: updatedCircles
+      });
+      
+      // Check if all circles are touched
+      const allTouched = updatedCircles.every(circle => circle.active);
+      if (allTouched && get().phase === "waiting") {
+        get().startCountdown();
+      }
+    },
+    
+    removeTouch: (touchId: number) => {
+      const { activeTouches, circles } = get();
+      const touch = activeTouches.get(touchId);
+      
+      if (touch) {
+        const newTouches = new Map(activeTouches);
+        newTouches.delete(touchId);
+        
+        // Check if this circle still has other touches
+        const hasOtherTouches = Array.from(newTouches.values())
+          .some(t => t.circleIndex === touch.circleIndex);
+        
+        const updatedCircles = circles.map(circle => 
+          circle.id === touch.circleIndex && !hasOtherTouches
+            ? { ...circle, active: false }
+            : circle
+        );
+        
+        set({ 
+          activeTouches: newTouches,
+          circles: updatedCircles
+        });
+        
+        // If we're in countdown and not all circles are touched anymore, go back to waiting
+        const allTouched = updatedCircles.every(circle => circle.active);
+        if (!allTouched && (get().phase === "countdown" || get().phase === "selection")) {
+          set({ phase: "waiting", countdownTime: 3 });
+        }
+      }
+    },
+    
+    startCountdown: () => {
+      set({ phase: "countdown", countdownTime: 3 });
+    },
+    
+    selectWinner: () => {
+      const { circles } = get();
+      const activeCircles = circles.filter(circle => circle.active);
+      
+      if (activeCircles.length > 0) {
+        const randomIndex = Math.floor(Math.random() * activeCircles.length);
+        const selectedCircle = activeCircles[randomIndex];
+        
+        const updatedCircles = circles.map(circle => ({
+          ...circle,
+          selected: circle.id === selectedCircle.id
+        }));
+        
+        set({
+          phase: "reveal",
+          selectedCircle: selectedCircle.id,
+          circles: updatedCircles
+        });
+      }
+    },
+    
+    resetGame: () => {
+      const { circles } = get();
+      const resetCircles = circles.map(circle => ({
+        ...circle,
+        active: false,
+        selected: false
+      }));
+      
+      set({
+        phase: "waiting",
+        circles: resetCircles,
+        activeTouches: new Map(),
+        selectedCircle: null,
+        countdownTime: 3
+      });
+    },
+    
+    setCountdownTime: (time: number) => {
+      set({ countdownTime: time });
+    }
+  }))
+);
