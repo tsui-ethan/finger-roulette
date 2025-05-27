@@ -11,7 +11,7 @@ interface SettingsPageProps {
 }
 
 export const SettingsPage = ({ onBack }: SettingsPageProps) => {
-  const { resetInterval, setResetInterval, resetLog, lastResetDate } = useDareLog();
+  const { resetInterval, setResetInterval, resetLog, lastResetDate } = useGameLog();
   const { isMuted, toggleMute } = useAudio();
 
   const resetIntervalOptions: Array<{ value: ResetInterval; label: string; description: string }> = [
