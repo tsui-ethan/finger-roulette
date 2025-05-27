@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useAudio } from "@/lib/stores/useAudio";
-import { useDareLog } from "@/lib/stores/useDareLog";
+import { useGameLog } from "@/lib/stores/useGameLog";
 import { Volume2, VolumeX, RotateCcw, BarChart3, Settings } from "lucide-react";
+import Confetti from "react-confetti";
 
 interface GameUIProps {
   onShowLog?: () => void;
@@ -13,7 +15,7 @@ interface GameUIProps {
 export const GameUI = ({ onShowLog, onShowSettings }: GameUIProps) => {
   const { phase, countdownTime, selectedCircle, autoStartTimer, resetGame, forceStart } = useGameState();
   const { isMuted, toggleMute } = useAudio();
-  const { addDare, checkAndResetIfNeeded } = useDareLog();
+  const { addGame, checkAndResetIfNeeded } = useGameLog();
   
   const getInstructionText = () => {
     switch (phase) {
@@ -63,16 +65,16 @@ export const GameUI = ({ onShowLog, onShowSettings }: GameUIProps) => {
             {phase === "reveal" && selectedCircle !== null && (
               <div className="space-y-2">
                 <p className="text-lg md:text-xl text-red-100 mt-2 animate-bounce">
-                  🎯 Do the dare! 🎯
+                  🎯 You've been chosen! 🎯
                 </p>
                 <Button
                   onClick={() => {
-                    addDare(selectedCircle);
+                    addGame(selectedCircle);
                     resetGame();
                   }}
                   className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full"
                 >
-                  ✅ Dare Completed!
+                  ✅ Challenge Completed!
                 </Button>
               </div>
             )}

@@ -5,7 +5,7 @@ import { GameUI } from "@/components/GameUI";
 import { LogPage } from "@/components/LogPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useAudio } from "@/lib/stores/useAudio";
-import { useDareLog } from "@/lib/stores/useDareLog";
+import { useGameLog } from "@/lib/stores/useGameLog";
 import "@fontsource/inter";
 
 type AppPage = "game" | "log" | "settings";
@@ -51,7 +51,7 @@ const AudioLoader = () => {
 
 function App() {
   const [currentPage, setCurrentPage] = useState<AppPage>("game");
-  const { checkAndResetIfNeeded } = useDareLog();
+  const { checkAndResetIfNeeded } = useGameLog();
 
   // Check for automatic resets on app load
   useEffect(() => {
