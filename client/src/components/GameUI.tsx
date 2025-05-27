@@ -17,6 +17,40 @@ export const GameUI = ({ onShowLog, onShowSettings }: GameUIProps) => {
   const { isMuted, toggleMute } = useAudio();
   const { addGame, checkAndResetIfNeeded } = useGameLog();
   
+  // Confetti state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0
+  });
+
+  // Update window dimensions for responsive confetti
+  useEffect(() => {
+    const updateDimensions = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', updateDimensions);
+    return () => window.removeEventListener('resize', updateDimensions);
+  }, []);
+
+  // Trigger confetti when someone is selected
+  useEffect(() => {
+    if (phase === "reveal" && selectedCircle !== null) {
+      setShowConfetti(true);
+      // Stop confetti after 5 seconds
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowConfetti(false);
+    }
+  }, [phase, selectedCircle]);
+  
   const getInstructionText = () => {
     switch (phase) {
       case "waiting":
@@ -55,6 +89,24 @@ export const GameUI = ({ onShowLog, onShowSettings }: GameUIProps) => {
   
   return (
     <div className="absolute inset-0 pointer-events-none z-10">
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <Confetti
+          width={windowDimensions.width}
+          height={windowDimensions.height}
+          numberOfPieces={200}
+          recycle={false}
+          colors={[
+            '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
+            '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9'
+          ]}
+          gravity={0.3}
+          wind={0.05}
+          initialVelocityX={5}
+          initialVelocityY={15}
+          className="pointer-events-none"
+        />
+      )}
       {/* Top instruction text */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
         <Card className="bg-black/60 border-white/20 backdrop-blur-sm pointer-events-auto">
@@ -150,6 +202,7 @@ export const GameUI = ({ onShowLog, onShowSettings }: GameUIProps) => {
             {phase === "reveal" ? "Complete" : phase}
           </span>
         </div>
+      </div>
       </div>
     </div>
   );
