@@ -26,6 +26,7 @@ export const GameBoard = () => {
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autoStartRef = useRef<NodeJS.Timeout | null>(null);
+  const mouseDownIds = useRef<Set<number>>(new Set());
   
   // Initialize game on mount
   useEffect(() => {
@@ -103,7 +104,7 @@ export const GameBoard = () => {
     };
   }, []);
   
-  // Direct circle touch handler
+  // Direct circle touch handler for both touch and mouse
   const handleCircleTouch = useCallback((circleId: number, x: number, y: number) => {
     if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
     
@@ -114,6 +115,45 @@ export const GameBoard = () => {
     
     console.log(`Circle ${circleId + 1} touched at (${x}, ${y})`);
   }, [phase, addTouch, playHit]);
+
+  // Mouse event handlers for desktop support
+  const handleMouseDown = useCallback((event: MouseEvent) => {
+    if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
+    
+    event.preventDefault();
+    const element = document.elementFromPoint(event.clientX, event.clientY);
+    
+    if (element && element.hasAttribute('data-circle-id')) {
+      const circleId = parseInt(element.getAttribute('data-circle-id') || '0');
+      if (!mouseDownIds.current.has(circleId)) {
+        mouseDownIds.current.add(circleId);
+        const touchId = 2000 + circleId + Date.now(); // Different ID range for mouse
+        addTouch(touchId, circleId, event.clientX, event.clientY);
+        playHit();
+        console.log(`Mouse down on Circle ${circleId + 1} at (${event.clientX}, ${event.clientY})`);
+      }
+    }
+  }, [phase, addTouch, playHit]);
+
+  const handleMouseUp = useCallback((event: MouseEvent) => {
+    // Clear all mouse down states
+    mouseDownIds.current.clear();
+  }, []);
+
+  // Add mouse event listeners
+  useEffect(() => {
+    const element = document.body;
+    
+    element.addEventListener('mousedown', handleMouseDown);
+    element.addEventListener('mouseup', handleMouseUp);
+    element.addEventListener('mouseleave', handleMouseUp);
+    
+    return () => {
+      element.removeEventListener('mousedown', handleMouseDown);
+      element.removeEventListener('mouseup', handleMouseUp);
+      element.removeEventListener('mouseleave', handleMouseUp);
+    };
+  }, [handleMouseDown, handleMouseUp]);
 
   // Touch event handlers for multi-touch
   const handleTouchStart = useCallback((touches: TouchList, event: TouchEvent) => {

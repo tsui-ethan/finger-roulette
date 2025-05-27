@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface TouchCircleProps {
@@ -17,6 +18,8 @@ export const TouchCircle = ({
   size,
   onTouch 
 }: TouchCircleProps) => {
+  const [isMousePressed, setIsMousePressed] = useState(false);
+
   const handlePointerDown = (event: React.PointerEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -28,9 +31,22 @@ export const TouchCircle = ({
   const handleMouseDown = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    setIsMousePressed(true);
     if (onTouch) {
       onTouch(id, event.clientX, event.clientY);
     }
+  };
+
+  const handleMouseUp = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsMousePressed(false);
+  };
+
+  const handleMouseLeave = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsMousePressed(false);
   };
 
   const handleTouchStart = (event: React.TouchEvent) => {
@@ -51,7 +67,8 @@ export const TouchCircle = ({
         "transform -translate-x-1/2 -translate-y-1/2",
         active && !selected && "border-yellow-400 bg-yellow-500/20 shadow-lg shadow-yellow-400/50 scale-110",
         !active && !selected && "border-purple-400 bg-purple-500/10 hover:bg-purple-500/20 hover:scale-105",
-        selected && "border-red-500 bg-red-500/30 shadow-xl shadow-red-500/70 scale-125 animate-pulse"
+        selected && "border-red-500 bg-red-500/30 shadow-xl shadow-red-500/70 scale-125 animate-pulse",
+        isMousePressed && !selected && "scale-105 bg-blue-500/20 border-blue-400"
       )}
       style={{
         left: `${position.x}%`,
@@ -62,6 +79,8 @@ export const TouchCircle = ({
       }}
       onPointerDown={handlePointerDown}
       onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}
       data-circle-id={id}
     >
