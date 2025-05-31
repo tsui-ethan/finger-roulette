@@ -37,7 +37,7 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-800 to-zinc-900 p-4 overflow-y-auto overscroll-auto">
+    <div className="fixed inset-0 min-h-screen w-screen bg-gradient-to-br from-slate-900 via-gray-800 to-zinc-900 p-4 overflow-y-auto overscroll-auto touch-auto">
       <div className="max-w-2xl mx-auto pb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -155,22 +155,6 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
                   <li>• <strong>Weekly:</strong> Counts reset every 7 days</li>
                   <li>• <strong>Monthly:</strong> Counts reset at the start of each month</li>
                 </ul>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Game Info */}
-          <Card className="bg-white/10 border-white/20 border-b-4 border-b-blue-400/40 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden">
-            <CardHeader>
-              <CardTitle className="text-white">Game Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-white/70 text-lg space-y-4 pb-6">
-                <p>• Touch or click on circles to activate them</p>
-                <p>• Game starts when at least one circle is touched</p>
-                <p>• Auto-start timer: 5 seconds after first touch</p>
-                <p>• Manual start: Click the "Begin" button</p>
-                <p>• Selected player gets to do a dare!</p>
               </div>
             </CardContent>
           </Card>
