@@ -160,12 +160,12 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
           </Card>
 
           {/* Game Info */}
-          <Card className="bg-white/10 border-white/20 backdrop-blur-sm">
+          <Card className="bg-white/10 border-white/20 border-b-4 border-b-blue-400/40 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden">
             <CardHeader>
               <CardTitle className="text-white">Game Information</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-white/70 text-sm space-y-2">
+              <div className="text-white/70 text-lg space-y-4 pb-6">
                 <p>• Touch or click on circles to activate them</p>
                 <p>• Game starts when at least one circle is touched</p>
                 <p>• Auto-start timer: 5 seconds after first touch</p>
