@@ -75,7 +75,19 @@ export const TouchCircle = ({
         top: `${position.y}%`,
         width: `${size}px`,
         height: `${size}px`,
-        fontSize: `${size / 4}px`
+        minWidth: `${size}px`,
+        minHeight: `${size}px`,
+        maxWidth: `${size}px`,
+        maxHeight: `${size}px`,
+        fontSize: `${size / 4}px`,
+        borderRadius: '50%',
+        boxSizing: 'border-box',
+        touchAction: 'none', // Prevents browser gestures on mobile
+        userSelect: 'none', // Prevents text selection on desktop
+        WebkitUserSelect: 'none',
+        msUserSelect: 'none',
+        MozUserSelect: 'none',
+        background: 'rgba(0,0,0,0.01)'
       }}
       onPointerDown={handlePointerDown}
       onMouseDown={handleMouseDown}
@@ -83,6 +95,11 @@ export const TouchCircle = ({
       onMouseLeave={handleMouseLeave}
       onTouchStart={handleTouchStart}
       data-circle-id={id}
+      tabIndex={0} // Make focusable for keyboard
+      onWheel={e => e.stopPropagation()} // Prevent scroll events from bubbling
+      onScroll={e => e.stopPropagation()} // Prevent scroll events from bubbling
+      aria-label={`Touch circle ${id + 1}`}
+      role="button"
     >
       {selected && (
         <div className="absolute inset-0 rounded-full border-4 border-red-500 animate-ping" />
@@ -93,12 +110,10 @@ export const TouchCircle = ({
       )}>
         {id + 1}
       </span>
-      
       {/* Glow effect for active circles */}
       {active && !selected && (
         <div className="absolute inset-0 rounded-full bg-yellow-400/20 blur-sm scale-110" />
       )}
-      
       {/* Winner glow effect */}
       {selected && (
         <div className="absolute inset-0 rounded-full bg-red-500/30 blur-md scale-150 animate-pulse" />
