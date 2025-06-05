@@ -207,6 +207,44 @@ export const GameBoard = () => {
               />
             ) : null;
           })}
+      {/* Top-right control buttons */}
+      <div className="absolute top-4 right-4 z-50 flex gap-2">
+        <button
+          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
+          title="Settings"
+          onClick={() => alert('Settings clicked!')}
+        >
+          <span role="img" aria-label="settings">⚙️</span>
+        </button>
+        <button
+          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
+          title="Restart"
+          onClick={() => alert('Restart clicked!')}
+        >
+          <span role="img" aria-label="restart">🔄</span>
+        </button>
+        <button
+          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
+          title="Instructions"
+          onClick={() => alert('Instructions clicked!')}
+        >
+          <span role="img" aria-label="instructions">❓</span>
+        </button>
+        <button
+          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
+          title="Game Mode"
+          onClick={() => alert('Game mode switch clicked!')}
+        >
+          <span role="img" aria-label="game mode">🎮</span>
+        </button>
+        <button
+          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
+          title="Mute/Unmute"
+          onClick={() => alert('Mute/Unmute clicked!')}
+        >
+          <span role="img" aria-label="mute">🔊</span>
+        </button>
+      </div>
     </div>
   );
 };
