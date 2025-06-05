@@ -3,7 +3,7 @@ import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
 import { Button } from "@/components/ui/button";
-import { Settings } from "lucide-react";
+import { Shuffle } from "lucide-react";
 
 export const GameBoard = () => {
   const {
@@ -120,7 +120,7 @@ export const GameBoard = () => {
             className="bg-black/60 border-white/20 text-white hover:bg-white/20"
             title="Switch to Dynamic Mode"
           >
-            <Settings className="h-4 w-4" />
+            <Shuffle className="h-4 w-4" />
           </Button>
         </div>
         {circlePositions.map((pos, i) => (
@@ -150,7 +150,7 @@ export const GameBoard = () => {
           className="bg-black/60 border-white/20 text-white hover:bg-white/20"
           title={mode === 'dynamic' ? 'Switch to Set Buttons Mode' : 'Switch to Dynamic Mode'}
         >
-          <Settings className="h-4 w-4" />
+          <Shuffle className="h-4 w-4" />
         </Button>
       </div>
       {/* Animated background particles */}
