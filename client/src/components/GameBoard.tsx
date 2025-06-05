@@ -1,9 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
 
 export const GameBoard = () => {
+  const gameState = useGameState();
   const {
     phase,
     pointers,
@@ -11,9 +12,66 @@ export const GameBoard = () => {
     updatePointer,
     removePointer,
     resetPointers
-  } = useGameState();
+  }: any = gameState;
 
   const pointerDownRef = useRef(false);
+  // --- Countdown and selection state ---
+  const [selectionState, setSelectionState] = useState<{ selecting: boolean; selectedId: number | null; countdown: number }>({ selecting: false, selectedId: null, countdown: 3 });
+  const selectionTimeout = useRef<NodeJS.Timeout | null>(null);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
+  const prevPointerCount = useRef(0);
+  const prevPointerSet = useRef<any[]>([]);
+
+  useEffect(() => {
+    const pointerCount = pointers.size;
+    // Start countdown if going from 0 to >0 pointers and not already selecting
+    if (
+      prevPointerCount.current === 0 && pointerCount > 0 &&
+      !selectionState.selecting && selectionState.selectedId === null
+    ) {
+      setSelectionState({ selecting: true, selectedId: null, countdown: 3 });
+      let localCount = 3;
+      countdownInterval.current = setInterval(() => {
+        localCount -= 1;
+        setSelectionState(prev => {
+          if (!prev.selecting) return prev;
+          if (localCount > 0) {
+            return { ...prev, countdown: localCount };
+          } else {
+            clearInterval(countdownInterval.current!);
+            return { ...prev, countdown: 0 };
+          }
+        });
+      }, 1000);
+      selectionTimeout.current = setTimeout(() => {
+        // Pick winner from current or last pointer set
+        const pointerArr = Array.from(pointers.values());
+        const candidates = pointerArr.length > 0 ? pointerArr : prevPointerSet.current;
+        if (candidates.length > 0) {
+          const winner = candidates[Math.floor(Math.random() * candidates.length)];
+          setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
+        } else {
+          setSelectionState({ selecting: false, selectedId: null, countdown: 0 });
+        }
+      }, 3000);
+    }
+    // Only reset selection state if not currently selecting (i.e., before countdown starts)
+    if (pointerCount === 0 && !selectionState.selecting && selectionState.selectedId === null) {
+      setSelectionState({ selecting: false, selectedId: null, countdown: 3 });
+      if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
+    }
+    // Track the last non-empty pointer set for winner selection if all pointers are removed
+    if (pointerCount > 0) {
+      prevPointerSet.current = Array.from(pointers.values());
+    }
+    prevPointerCount.current = pointerCount;
+    // Only clear intervals/timeouts on unmount
+    return () => {
+      if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
+      if (countdownInterval.current) clearInterval(countdownInterval.current);
+    };
+  }, [pointers.size, selectionState.selecting, selectionState.selectedId]);
 
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
@@ -91,6 +149,18 @@ export const GameBoard = () => {
       ref={touchRef}
       className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}
     >
+      {/* Instructions and countdown/winner text */}
+      <div className="absolute left-1/2 top-8 -translate-x-1/2 z-50 text-2xl font-bold text-white drop-shadow-lg">
+        {pointers.size === 0 && selectionState.selectedId === null && (
+          <span>Touch or click to join</span>
+        )}
+        {pointers.size > 0 && selectionState.selecting && (
+          <span>Get ready... {selectionState.countdown}</span>
+        )}
+        {selectionState.selectedId !== null && (
+          <span className="text-yellow-300 animate-bounce">🎉 Player Selected! 🎉</span>
+        )}
+      </div>
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }, (_, i) => (
           <div
@@ -107,15 +177,32 @@ export const GameBoard = () => {
           />
         ))}
       </div>
-      {Array.from(pointers.values()).map(pointer => (
-        <TouchCircle
-          key={pointer.id}
-          id={pointer.id}
-          position={{ x: (pointer.x / window.innerWidth) * 100, y: (pointer.y / window.innerHeight) * 100 }}
-          number={pointer.number}
-          size={120}
-        />
-      ))}
+      {/* Show all circles if not selected, otherwise only the winner */}
+      {selectionState.selectedId === null
+        ? Array.from(pointers.values()).map(pointer => {
+            const p = pointer as any;
+            return (
+              <TouchCircle
+                key={p.id}
+                id={p.id}
+                position={{ x: (p.x / window.innerWidth) * 100, y: (p.y / window.innerHeight) * 100 }}
+                number={p.number}
+                size={120}
+              />
+            );
+          })
+        : Array.from(pointers.values()).map(pointer => {
+            const p = pointer as any;
+            return p.id === selectionState.selectedId ? (
+              <TouchCircle
+                key={p.id}
+                id={p.id}
+                position={{ x: (p.x / window.innerWidth) * 100, y: (p.y / window.innerHeight) * 100 }}
+                number={p.number}
+                size={160}
+              />
+            ) : null;
+          })}
     </div>
   );
 };
