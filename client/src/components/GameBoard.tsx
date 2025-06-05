@@ -2,6 +2,8 @@ import { useEffect, useCallback, useRef } from "react";
 import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
+import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 
 export const GameBoard = () => {
   const {
@@ -110,12 +112,17 @@ export const GameBoard = () => {
     });
     return (
       <div className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}>
-        <button
-          className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/80 rounded shadow text-black font-bold hover:bg-white"
-          onClick={() => setMode('dynamic')}
-        >
-          Switch to Dynamic Mode
-        </button>
+        <div className="absolute top-4 right-4 z-50 flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setMode('dynamic')}
+            className="bg-black/60 border-white/20 text-white hover:bg-white/20"
+            title="Switch to Dynamic Mode"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        </div>
         {circlePositions.map((pos, i) => (
           <TouchCircle
             key={i}
@@ -135,12 +142,17 @@ export const GameBoard = () => {
       className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}
     >
       {/* Game mode toggle button */}
-      <button
-        className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/80 rounded shadow text-black font-bold hover:bg-white"
-        onClick={() => setMode(mode === 'dynamic' ? 'fixed' : 'dynamic')}
-      >
-        Switch to {mode === 'dynamic' ? 'Set Buttons' : 'Dynamic'} Mode
-      </button>
+      <div className="absolute top-4 right-4 z-50 flex gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setMode(mode === 'dynamic' ? 'fixed' : 'dynamic')}
+          className="bg-black/60 border-white/20 text-white hover:bg-white/20"
+          title={mode === 'dynamic' ? 'Switch to Set Buttons Mode' : 'Switch to Dynamic Mode'}
+        >
+          <Settings className="h-4 w-4" />
+        </Button>
+      </div>
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }, (_, i) => (
