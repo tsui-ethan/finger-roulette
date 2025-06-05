@@ -1,3 +1,4 @@
 export default function handler(req, res) {
-  res.status(200).json({ message: "This is a Vercel serverless function!" });
+  res.setHeader('Content-Type', 'application/json');
+  res.status(200).end(JSON.stringify({ message: "This is a Vercel serverless function!" }));
 }
