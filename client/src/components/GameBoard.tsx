@@ -2,193 +2,81 @@ import { useEffect, useCallback, useRef } from "react";
 import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
-import { useAudio } from "@/lib/stores/useAudio";
 
-const CIRCLE_COUNT = 8;
 const CIRCLE_SIZE = 120;
 
 export const GameBoard = () => {
-  const { 
-    phase, 
-    circles, 
-    countdownTime,
-    autoStartTimer,
-    initializeGame, 
-    addTouch, 
-    removeTouch, 
-    selectWinner,
-    setCountdownTime,
-    setAutoStartTimer,
-    forceStart
+  const {
+    phase,
+    pointers,
+    addPointer,
+    updatePointer,
+    removePointer,
+    resetPointers
   } = useGameState();
-  
-  const { playHit, playSuccess } = useAudio();
-  const countdownRef = useRef<NodeJS.Timeout | null>(null);
-  const selectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const autoStartRef = useRef<NodeJS.Timeout | null>(null);
-  const mouseDownIds = useRef<Set<number>>(new Set());
-  
-  // Initialize game on mount
+
+  // --- Pointer/mouse event handlers ---
+  const pointerDownRef = useRef(false);
+
+  // Mouse events
   useEffect(() => {
-    initializeGame(CIRCLE_COUNT);
-  }, [initializeGame]);
-  
-  // Generate circle positions in a circular pattern
-  const circlePositions = Array.from({ length: CIRCLE_COUNT }, (_, i) => {
-    const angle = (i * 360) / CIRCLE_COUNT;
-    const centerX = 50;
-    const centerY = 50;
-    const radius = 25; // Percentage from center
-    
-    const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180);
-    const y = centerY + radius * Math.sin((angle - 90) * Math.PI / 180);
-    
-    return { x, y };
-  });
-  
-  // Handle auto-start timer
-  useEffect(() => {
-    if (phase === "ready" && autoStartTimer > 0) {
-      autoStartRef.current = setTimeout(() => {
-        setAutoStartTimer(autoStartTimer - 1);
-        playHit(); // Play tick sound
-      }, 1000);
-    } else if (phase === "ready" && autoStartTimer === 0) {
-      forceStart(); // Auto-start the game
-    }
-    
-    return () => {
-      if (autoStartRef.current) {
-        clearTimeout(autoStartRef.current);
-      }
+    const handlePointerDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      pointerDownRef.current = true;
+      addPointer(9999, e.clientX, e.clientY); // 9999: single mouse pointer id
     };
-  }, [phase, autoStartTimer, setAutoStartTimer, forceStart, playHit]);
-
-  // Handle countdown timer
-  useEffect(() => {
-    if (phase === "countdown" && countdownTime > 0) {
-      countdownRef.current = setTimeout(() => {
-        setCountdownTime(countdownTime - 1);
-        playHit(); // Play tick sound
-      }, 1000);
-    } else if (phase === "countdown" && countdownTime === 0) {
-      // Start selection phase
-      useGameState.setState({ phase: "selection" });
-      
-      // Select winner after a brief moment
-      selectionTimeoutRef.current = setTimeout(() => {
-        selectWinner();
-        playSuccess(); // Play selection sound
-      }, 1000 + Math.random() * 2000); // Random delay between 1-3 seconds
-    }
-    
-    return () => {
-      if (countdownRef.current) {
-        clearTimeout(countdownRef.current);
-      }
+    const handlePointerMove = (e: MouseEvent) => {
+      if (!pointerDownRef.current) return;
+      updatePointer(9999, e.clientX, e.clientY);
     };
-  }, [phase, countdownTime, setCountdownTime, selectWinner, playHit, playSuccess]);
-  
-  // Cleanup timeouts
-  useEffect(() => {
-    return () => {
-      if (countdownRef.current) {
-        clearTimeout(countdownRef.current);
-      }
-      if (selectionTimeoutRef.current) {
-        clearTimeout(selectionTimeoutRef.current);
-      }
-      if (autoStartRef.current) {
-        clearTimeout(autoStartRef.current);
-      }
+    const handlePointerUp = () => {
+      pointerDownRef.current = false;
+      removePointer(9999);
     };
-  }, []);
-  
-  // Direct circle touch handler for both touch and mouse
-  const handleCircleTouch = useCallback((circleId: number, x: number, y: number) => {
-    if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
-    
-    // Use a unique touch ID for direct touches (starting from 1000 to avoid conflicts)
-    const touchId = 1000 + circleId + Date.now();
-    addTouch(touchId, circleId, x, y);
-    playHit(); // Play touch feedback sound
-    
-    console.log(`Circle ${circleId + 1} touched at (${x}, ${y})`);
-  }, [phase, addTouch, playHit]);
-
-  // Mouse event handlers for desktop support
-  const handleMouseDown = useCallback((event: MouseEvent) => {
-    if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
-    
-    event.preventDefault();
-    const element = document.elementFromPoint(event.clientX, event.clientY);
-    
-    if (element && element.hasAttribute('data-circle-id')) {
-      const circleId = parseInt(element.getAttribute('data-circle-id') || '0');
-      if (!mouseDownIds.current.has(circleId)) {
-        mouseDownIds.current.add(circleId);
-        const touchId = 2000 + circleId + Date.now(); // Different ID range for mouse
-        addTouch(touchId, circleId, event.clientX, event.clientY);
-        playHit();
-        console.log(`Mouse down on Circle ${circleId + 1} at (${event.clientX}, ${event.clientY})`);
-      }
-    }
-  }, [phase, addTouch, playHit]);
-
-  const handleMouseUp = useCallback((event: MouseEvent) => {
-    // Clear all mouse down states
-    mouseDownIds.current.clear();
-  }, []);
-
-  // Add mouse event listeners
-  useEffect(() => {
-    const element = document.body;
-    
-    element.addEventListener('mousedown', handleMouseDown);
-    element.addEventListener('mouseup', handleMouseUp);
-    element.addEventListener('mouseleave', handleMouseUp);
-    
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
     return () => {
-      element.removeEventListener('mousedown', handleMouseDown);
-      element.removeEventListener('mouseup', handleMouseUp);
-      element.removeEventListener('mouseleave', handleMouseUp);
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
     };
-  }, [handleMouseDown, handleMouseUp]);
+  }, [addPointer, updatePointer, removePointer]);
 
-  // Touch event handlers for multi-touch
-  const handleTouchStart = useCallback((touches: TouchList, event: TouchEvent) => {
-    if (phase !== "waiting" && phase !== "ready" && phase !== "countdown") return;
-    
-    for (let i = 0; i < touches.length; i++) {
-      const touch = touches[i];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      
-      if (element && element.hasAttribute('data-circle-id')) {
-        const circleId = parseInt(element.getAttribute('data-circle-id') || '0');
-        addTouch(touch.identifier, circleId, touch.clientX, touch.clientY);
-        playHit(); // Play touch feedback sound
-      }
-    }
-  }, [phase, addTouch, playHit]);
-  
-  const handleTouchEnd = useCallback((touches: TouchList, event: TouchEvent) => {
-    // Get all touch identifiers that ended
-    const activeTouchIds = new Set(Array.from(touches).map(t => t.identifier));
-    const allTouchIds = new Set(Array.from(event.changedTouches).map(t => t.identifier));
-    
-    // Remove touches that ended
-    allTouchIds.forEach(touchId => {
-      if (!activeTouchIds.has(touchId)) {
-        removeTouch(touchId);
-      }
-    });
-  }, [removeTouch]);
-  
+  // Touch events (multi-touch)
   const touchRef = useMultiTouch({
-    onTouchStart: handleTouchStart,
-    onTouchEnd: handleTouchEnd
+    onTouchStart: (touches) => {
+      for (let i = 0; i < touches.length; i++) {
+        const t = touches[i];
+        addPointer(t.identifier, t.clientX, t.clientY);
+      }
+    },
+    onTouchMove: (touches) => {
+      for (let i = 0; i < touches.length; i++) {
+        const t = touches[i];
+        updatePointer(t.identifier, t.clientX, t.clientY);
+      }
+    },
+    onTouchEnd: (touches, event) => {
+      // Remove ended touches
+      const activeIds = new Set(Array.from(touches).map(t => t.identifier));
+      for (let i = 0; i < event.changedTouches.length; i++) {
+        const t = event.changedTouches[i];
+        if (!activeIds.has(t.identifier)) {
+          removePointer(t.identifier);
+        }
+      }
+    }
   });
-  
+
+  // Clean up all pointers on unmount
+  useEffect(() => {
+    return () => {
+      resetPointers();
+    };
+  }, [resetPointers]);
+
+  // --- UI ---
   const getBackgroundGradient = () => {
     switch (phase) {
       case "waiting":
@@ -205,9 +93,9 @@ export const GameBoard = () => {
         return "from-gray-900 via-gray-800 to-black";
     }
   };
-  
+
   return (
-    <div 
+    <div
       ref={touchRef}
       className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}
     >
@@ -228,26 +116,16 @@ export const GameBoard = () => {
           />
         ))}
       </div>
-      
-      {/* Touch circles */}
-      {circles.map((circle, index) => (
+      {/* Dynamic touch/mouse circles */}
+      {Array.from(pointers.values()).map(pointer => (
         <TouchCircle
-          key={circle.id}
-          id={circle.id}
-          active={circle.active}
-          selected={circle.selected}
-          position={circlePositions[index]}
+          key={pointer.id}
+          id={pointer.id}
+          position={{ x: (pointer.x / window.innerWidth) * 100, y: (pointer.y / window.innerHeight) * 100 }}
+          number={pointer.number}
           size={CIRCLE_SIZE}
-          onTouch={handleCircleTouch}
         />
       ))}
-      
-      {/* Selection animation overlay */}
-      {phase === "selection" && (
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <div className="text-6xl animate-spin">🎲</div>
-        </div>
-      )}
     </div>
   );
 };

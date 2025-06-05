@@ -3,25 +3,26 @@ import { subscribeWithSelector } from "zustand/middleware";
 
 export type GamePhase = "waiting" | "ready" | "countdown" | "selection" | "reveal";
 
-interface TouchData {
-  id: number;
-  circleIndex: number;
+interface PointerData {
+  id: number; // pointerId or touch identifier
   x: number;
   y: number;
+  number: number; // unique number assigned to this pointer
 }
 
 interface GameState {
   phase: GamePhase;
-  circles: Array<{ id: number; active: boolean; selected: boolean }>;
-  activeTouches: Map<number, TouchData>;
+  pointers: Map<number, PointerData>; // dynamic pointers
+  nextPointerNumber: number; // for assigning unique numbers
   selectedCircle: number | null;
   countdownTime: number;
   autoStartTimer: number;
   
   // Actions
-  initializeGame: (circleCount: number) => void;
-  addTouch: (touchId: number, circleIndex: number, x: number, y: number) => void;
-  removeTouch: (touchId: number) => void;
+  addPointer: (id: number, x: number, y: number) => void;
+  updatePointer: (id: number, x: number, y: number) => void;
+  removePointer: (id: number) => void;
+  resetPointers: () => void;
   startCountdown: () => void;
   selectWinner: () => void;
   resetGame: () => void;
@@ -33,81 +34,39 @@ interface GameState {
 export const useGameState = create<GameState>()(
   subscribeWithSelector((set, get) => ({
     phase: "waiting",
-    circles: [],
-    activeTouches: new Map(),
+    pointers: new Map(),
+    nextPointerNumber: 1,
     selectedCircle: null,
     countdownTime: 3,
     autoStartTimer: 5,
     
-    initializeGame: (circleCount: number) => {
-      const circles = Array.from({ length: circleCount }, (_, i) => ({
-        id: i,
-        active: false,
-        selected: false
-      }));
-      
-      set({
-        phase: "waiting",
-        circles,
-        activeTouches: new Map(),
-        selectedCircle: null,
-        countdownTime: 3,
-        autoStartTimer: 5
-      });
+    addPointer: (id, x, y) => {
+      const { pointers, nextPointerNumber } = get();
+      if (pointers.has(id)) return; // already exists
+      const newPointers = new Map(pointers);
+      newPointers.set(id, { id, x, y, number: nextPointerNumber });
+      set({ pointers: newPointers, nextPointerNumber: nextPointerNumber + 1 });
     },
     
-    addTouch: (touchId: number, circleIndex: number, x: number, y: number) => {
-      const { activeTouches, circles } = get();
-      const newTouches = new Map(activeTouches);
-      newTouches.set(touchId, { id: touchId, circleIndex, x, y });
-      
-      const updatedCircles = circles.map(circle => 
-        circle.id === circleIndex 
-          ? { ...circle, active: true }
-          : circle
-      );
-      
-      set({ 
-        activeTouches: newTouches,
-        circles: updatedCircles
-      });
-      
-      // Check if at least one circle is touched to enter ready phase
-      const anyTouched = updatedCircles.some(circle => circle.active);
-      if (anyTouched && get().phase === "waiting") {
-        set({ phase: "ready", autoStartTimer: 5 });
-      }
+    updatePointer: (id, x, y) => {
+      const { pointers } = get();
+      if (!pointers.has(id)) return;
+      const newPointers = new Map(pointers);
+      const pointer = newPointers.get(id)!;
+      newPointers.set(id, { ...pointer, x, y });
+      set({ pointers: newPointers });
     },
     
-    removeTouch: (touchId: number) => {
-      const { activeTouches, circles } = get();
-      const touch = activeTouches.get(touchId);
-      
-      if (touch) {
-        const newTouches = new Map(activeTouches);
-        newTouches.delete(touchId);
-        
-        // Check if this circle still has other touches
-        const hasOtherTouches = Array.from(newTouches.values())
-          .some(t => t.circleIndex === touch.circleIndex);
-        
-        const updatedCircles = circles.map(circle => 
-          circle.id === touch.circleIndex && !hasOtherTouches
-            ? { ...circle, active: false }
-            : circle
-        );
-        
-        set({ 
-          activeTouches: newTouches,
-          circles: updatedCircles
-        });
-        
-        // If no circles are touched, go back to waiting
-        const anyTouched = updatedCircles.some(circle => circle.active);
-        if (!anyTouched && (get().phase === "ready" || get().phase === "countdown" || get().phase === "selection")) {
-          set({ phase: "waiting", countdownTime: 3, autoStartTimer: 5 });
-        }
-      }
+    removePointer: (id) => {
+      const { pointers } = get();
+      if (!pointers.has(id)) return;
+      const newPointers = new Map(pointers);
+      newPointers.delete(id);
+      set({ pointers: newPointers });
+    },
+    
+    resetPointers: () => {
+      set({ pointers: new Map(), nextPointerNumber: 1 });
     },
     
     startCountdown: () => {
@@ -115,38 +74,25 @@ export const useGameState = create<GameState>()(
     },
     
     selectWinner: () => {
-      const { circles } = get();
-      const activeCircles = circles.filter(circle => circle.active);
+      const { pointers } = get();
+      const activePointers = Array.from(pointers.values());
       
-      if (activeCircles.length > 0) {
-        const randomIndex = Math.floor(Math.random() * activeCircles.length);
-        const selectedCircle = activeCircles[randomIndex];
-        
-        const updatedCircles = circles.map(circle => ({
-          ...circle,
-          selected: circle.id === selectedCircle.id
-        }));
+      if (activePointers.length > 0) {
+        const randomIndex = Math.floor(Math.random() * activePointers.length);
+        const selectedPointer = activePointers[randomIndex];
         
         set({
           phase: "reveal",
-          selectedCircle: selectedCircle.id,
-          circles: updatedCircles
+          selectedCircle: selectedPointer.number,
         });
       }
     },
     
     resetGame: () => {
-      const { circles } = get();
-      const resetCircles = circles.map(circle => ({
-        ...circle,
-        active: false,
-        selected: false
-      }));
-      
       set({
         phase: "waiting",
-        circles: resetCircles,
-        activeTouches: new Map(),
+        pointers: new Map(),
+        nextPointerNumber: 1,
         selectedCircle: null,
         countdownTime: 3,
         autoStartTimer: 5
