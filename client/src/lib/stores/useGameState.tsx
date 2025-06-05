@@ -39,7 +39,7 @@ export const useGameState = create<GameState>()(
     autoStartTimer: 5,
     
     addPointer: (id, x, y) => {
-      const { pointers } = get();
+      const { pointers, phase } = get();
       if (pointers.has(id)) return; // already exists
       // Find the lowest available number starting from 1
       const usedNumbers = new Set(Array.from(pointers.values()).map(p => p.number));
@@ -50,6 +50,21 @@ export const useGameState = create<GameState>()(
       const newPointers = new Map(pointers);
       newPointers.set(id, { id, x, y, number: assignedNumber });
       set({ pointers: newPointers });
+      // If now at least 2 pointers and phase is waiting, start countdown
+      if (newPointers.size >= 2 && phase === "waiting") {
+        set({ phase: "countdown", countdownTime: 3 });
+        // Start a timer to pick a winner after 3 seconds
+        setTimeout(() => {
+          const { pointers: currentPointers, phase: currentPhase } = get();
+          if (currentPhase === "countdown" && currentPointers.size >= 2) {
+            // Pick a winner
+            const activePointers = Array.from(currentPointers.values());
+            const randomIndex = Math.floor(Math.random() * activePointers.length);
+            const selectedPointer = activePointers[randomIndex];
+            set({ phase: "reveal", selectedCircle: selectedPointer.number });
+          }
+        }, 3000);
+      }
     },
     
     updatePointer: (id, x, y) => {
@@ -62,11 +77,15 @@ export const useGameState = create<GameState>()(
     },
     
     removePointer: (id) => {
-      const { pointers } = get();
+      const { pointers, phase } = get();
       if (!pointers.has(id)) return;
       const newPointers = new Map(pointers);
       newPointers.delete(id);
       set({ pointers: newPointers });
+      // If less than 2 remain during countdown, reset to waiting
+      if (phase === "countdown" && newPointers.size < 2) {
+        set({ phase: "waiting", countdownTime: 3, selectedCircle: null });
+      }
     },
     
     resetPointers: () => {
