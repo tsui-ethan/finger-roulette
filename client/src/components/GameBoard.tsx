@@ -1,14 +1,10 @@
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
-import { Button } from "@/components/ui/button";
-import { Shuffle } from "lucide-react";
 
 export const GameBoard = () => {
   const {
-    mode,
-    setMode,
     phase,
     pointers,
     addPointer,
@@ -17,15 +13,13 @@ export const GameBoard = () => {
     resetPointers
   } = useGameState();
 
-  // --- Pointer/mouse event handlers ---
   const pointerDownRef = useRef(false);
 
-  // Mouse events
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       pointerDownRef.current = true;
-      addPointer(9999, e.clientX, e.clientY); // 9999: single mouse pointer id
+      addPointer(9999, e.clientX, e.clientY);
     };
     const handlePointerMove = (e: MouseEvent) => {
       if (!pointerDownRef.current) return;
@@ -45,7 +39,6 @@ export const GameBoard = () => {
     };
   }, [addPointer, updatePointer, removePointer]);
 
-  // Touch events (multi-touch)
   const touchRef = useMultiTouch({
     onTouchStart: (touches) => {
       for (let i = 0; i < touches.length; i++) {
@@ -60,7 +53,6 @@ export const GameBoard = () => {
       }
     },
     onTouchEnd: (touches, event) => {
-      // Remove ended touches
       const activeIds = new Set(Array.from(touches).map(t => t.identifier));
       for (let i = 0; i < event.changedTouches.length; i++) {
         const t = event.changedTouches[i];
@@ -71,14 +63,12 @@ export const GameBoard = () => {
     }
   });
 
-  // Clean up all pointers on unmount
   useEffect(() => {
     return () => {
       resetPointers();
     };
   }, [resetPointers]);
 
-  // --- UI ---
   const getBackgroundGradient = () => {
     switch (phase) {
       case "waiting":
@@ -96,64 +86,11 @@ export const GameBoard = () => {
     }
   };
 
-  // Render fixed mode (previous way: set buttons)
-  if (mode === 'fixed') {
-    // Example: render 8 fixed buttons in a circle
-    const CIRCLE_COUNT = 8;
-    const CIRCLE_SIZE = 120;
-    const circlePositions = Array.from({ length: CIRCLE_COUNT }, (_, i) => {
-      const angle = (i * 360) / CIRCLE_COUNT;
-      const centerX = 50;
-      const centerY = 50;
-      const radius = 25;
-      const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180);
-      const y = centerY + radius * Math.sin((angle - 90) * Math.PI / 180);
-      return { x, y };
-    });
-    return (
-      <div className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}>
-        <div className="absolute top-4 right-4 z-50 flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setMode('dynamic')}
-            className="bg-black/60 border-white/20 text-white hover:bg-white/20"
-            title="Switch to Dynamic Mode"
-          >
-            <Shuffle className="h-4 w-4" />
-          </Button>
-        </div>
-        {circlePositions.map((pos, i) => (
-          <TouchCircle
-            key={i}
-            id={i}
-            position={{ x: pos.x, y: pos.y }}
-            number={i + 1}
-            size={CIRCLE_SIZE}
-          />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div
       ref={touchRef}
       className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}
     >
-      {/* Game mode toggle button */}
-      <div className="absolute top-4 right-4 z-50 flex gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setMode(mode === 'dynamic' ? 'fixed' : 'dynamic')}
-          className="bg-black/60 border-white/20 text-white hover:bg-white/20"
-          title={mode === 'dynamic' ? 'Switch to Set Buttons Mode' : 'Switch to Dynamic Mode'}
-        >
-          <Shuffle className="h-4 w-4" />
-        </Button>
-      </div>
-      {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }, (_, i) => (
           <div
@@ -170,7 +107,6 @@ export const GameBoard = () => {
           />
         ))}
       </div>
-      {/* Dynamic touch/mouse circles */}
       {Array.from(pointers.values()).map(pointer => (
         <TouchCircle
           key={pointer.id}

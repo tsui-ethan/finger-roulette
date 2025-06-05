@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { GameBoard } from "@/components/GameBoard";
-import { GameUI } from "@/components/GameUI";
 import { LogPage } from "@/components/LogPage";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useAudio } from "@/lib/stores/useAudio";
@@ -69,10 +68,7 @@ function App() {
         return (
           <div className="w-full h-full relative font-sans antialiased">
             <GameBoard />
-            <GameUI 
-              onShowLog={() => setCurrentPage("log")}
-              onShowSettings={() => setCurrentPage("settings")}
-            />
+            {/* GameUI removed: no overlays, no buttons, no extra UI */}
           </div>
         );
     }
