@@ -21,14 +21,16 @@ export const GameBoard = () => {
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
   const prevPointerCount = useRef(0);
   const prevPointerSet = useRef<any[]>([]);
+  const countdownInProgress = useRef(false);
 
   useEffect(() => {
     const pointerCount = pointers.size;
     // Start countdown if going from 0 to >0 pointers and not already selecting
     if (
       prevPointerCount.current === 0 && pointerCount > 0 &&
-      !selectionState.selecting && selectionState.selectedId === null
+      !countdownInProgress.current
     ) {
+      countdownInProgress.current = true;
       setSelectionState({ selecting: true, selectedId: null, countdown: 3 });
       let localCount = 3;
       countdownInterval.current = setInterval(() => {
@@ -53,10 +55,11 @@ export const GameBoard = () => {
         } else {
           setSelectionState({ selecting: false, selectedId: null, countdown: 0 });
         }
+        countdownInProgress.current = false;
       }, 3000);
     }
     // Only reset selection state if not currently selecting (i.e., before countdown starts)
-    if (pointerCount === 0 && !selectionState.selecting && selectionState.selectedId === null) {
+    if (pointerCount === 0 && !countdownInProgress.current && selectionState.selectedId === null) {
       setSelectionState({ selecting: false, selectedId: null, countdown: 3 });
       if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
       if (countdownInterval.current) clearInterval(countdownInterval.current);
@@ -70,8 +73,9 @@ export const GameBoard = () => {
     return () => {
       if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
       if (countdownInterval.current) clearInterval(countdownInterval.current);
+      countdownInProgress.current = false;
     };
-  }, [pointers.size, selectionState.selecting, selectionState.selectedId]);
+  }, [pointers.size]);
 
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent) => {
