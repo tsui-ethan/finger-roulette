@@ -13,7 +13,6 @@ interface PointerData {
 interface GameState {
   phase: GamePhase;
   pointers: Map<number, PointerData>; // dynamic pointers
-  nextPointerNumber: number; // for assigning unique numbers
   selectedCircle: number | null;
   countdownTime: number;
   autoStartTimer: number;
@@ -35,17 +34,22 @@ export const useGameState = create<GameState>()(
   subscribeWithSelector((set, get) => ({
     phase: "waiting",
     pointers: new Map(),
-    nextPointerNumber: 1,
     selectedCircle: null,
     countdownTime: 3,
     autoStartTimer: 5,
     
     addPointer: (id, x, y) => {
-      const { pointers, nextPointerNumber } = get();
+      const { pointers } = get();
       if (pointers.has(id)) return; // already exists
+      // Find the lowest available number starting from 1
+      const usedNumbers = new Set(Array.from(pointers.values()).map(p => p.number));
+      let assignedNumber = 1;
+      while (usedNumbers.has(assignedNumber)) {
+        assignedNumber++;
+      }
       const newPointers = new Map(pointers);
-      newPointers.set(id, { id, x, y, number: nextPointerNumber });
-      set({ pointers: newPointers, nextPointerNumber: nextPointerNumber + 1 });
+      newPointers.set(id, { id, x, y, number: assignedNumber });
+      set({ pointers: newPointers });
     },
     
     updatePointer: (id, x, y) => {
@@ -66,7 +70,7 @@ export const useGameState = create<GameState>()(
     },
     
     resetPointers: () => {
-      set({ pointers: new Map(), nextPointerNumber: 1 });
+      set({ pointers: new Map() });
     },
     
     startCountdown: () => {
@@ -92,7 +96,6 @@ export const useGameState = create<GameState>()(
       set({
         phase: "waiting",
         pointers: new Map(),
-        nextPointerNumber: 1,
         selectedCircle: null,
         countdownTime: 3,
         autoStartTimer: 5
