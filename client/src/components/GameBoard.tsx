@@ -3,10 +3,10 @@ import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
 
-const CIRCLE_SIZE = 120;
-
 export const GameBoard = () => {
   const {
+    mode,
+    setMode,
     phase,
     pointers,
     addPointer,
@@ -94,11 +94,53 @@ export const GameBoard = () => {
     }
   };
 
+  // Render fixed mode (previous way: set buttons)
+  if (mode === 'fixed') {
+    // Example: render 8 fixed buttons in a circle
+    const CIRCLE_COUNT = 8;
+    const CIRCLE_SIZE = 120;
+    const circlePositions = Array.from({ length: CIRCLE_COUNT }, (_, i) => {
+      const angle = (i * 360) / CIRCLE_COUNT;
+      const centerX = 50;
+      const centerY = 50;
+      const radius = 25;
+      const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180);
+      const y = centerY + radius * Math.sin((angle - 90) * Math.PI / 180);
+      return { x, y };
+    });
+    return (
+      <div className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}>
+        <button
+          className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/80 rounded shadow text-black font-bold hover:bg-white"
+          onClick={() => setMode('dynamic')}
+        >
+          Switch to Dynamic Mode
+        </button>
+        {circlePositions.map((pos, i) => (
+          <TouchCircle
+            key={i}
+            id={i}
+            position={{ x: pos.x, y: pos.y }}
+            number={i + 1}
+            size={CIRCLE_SIZE}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={touchRef}
       className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}
     >
+      {/* Game mode toggle button */}
+      <button
+        className="absolute top-4 right-4 z-50 px-4 py-2 bg-white/80 rounded shadow text-black font-bold hover:bg-white"
+        onClick={() => setMode(mode === 'dynamic' ? 'fixed' : 'dynamic')}
+      >
+        Switch to {mode === 'dynamic' ? 'Set Buttons' : 'Dynamic'} Mode
+      </button>
       {/* Animated background particles */}
       <div className="absolute inset-0 overflow-hidden">
         {Array.from({ length: 20 }, (_, i) => (
@@ -123,7 +165,7 @@ export const GameBoard = () => {
           id={pointer.id}
           position={{ x: (pointer.x / window.innerWidth) * 100, y: (pointer.y / window.innerHeight) * 100 }}
           number={pointer.number}
-          size={CIRCLE_SIZE}
+          size={120}
         />
       ))}
     </div>

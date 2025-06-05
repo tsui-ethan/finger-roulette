@@ -16,6 +16,7 @@ interface GameState {
   selectedCircle: number | null;
   countdownTime: number;
   autoStartTimer: number;
+  mode: 'dynamic' | 'fixed'; // 'dynamic' = current, 'fixed' = previous (set buttons)
   
   // Actions
   addPointer: (id: number, x: number, y: number) => void;
@@ -28,6 +29,7 @@ interface GameState {
   setCountdownTime: (time: number) => void;
   setAutoStartTimer: (time: number) => void;
   forceStart: () => void;
+  setMode: (mode: 'dynamic' | 'fixed') => void;
 }
 
 export const useGameState = create<GameState>()(
@@ -37,6 +39,7 @@ export const useGameState = create<GameState>()(
     selectedCircle: null,
     countdownTime: 3,
     autoStartTimer: 5,
+    mode: 'dynamic',
     
     addPointer: (id, x, y) => {
       const { pointers, phase } = get();
@@ -131,6 +134,8 @@ export const useGameState = create<GameState>()(
     
     forceStart: () => {
       set({ phase: "countdown", countdownTime: 3 });
-    }
+    },
+    
+    setMode: (mode) => set({ mode }),
   }))
 );
