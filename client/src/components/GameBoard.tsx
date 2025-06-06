@@ -17,11 +17,24 @@ export const GameBoard = () => {
   const pointerDownRef = useRef(false);
   // --- Countdown and selection state ---
   const [selectionState, setSelectionState] = useState<{ selecting: boolean; selectedId: number | null; countdown: number }>({ selecting: false, selectedId: null, countdown: 3 });
+  const [winnerInfo, setWinnerInfo] = useState<{ x: number; y: number; number: number } | null>(null);
   const selectionTimeout = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
   const prevPointerCount = useRef(0);
   const prevPointerSet = useRef<any[]>([]);
   const countdownInProgress = useRef(false);
+  const winnerTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper to reset the game state
+  const resetGame = () => {
+    setSelectionState({ selecting: false, selectedId: null, countdown: 3 });
+    setWinnerInfo(null);
+    if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
+    if (countdownInterval.current) clearInterval(countdownInterval.current);
+    if (winnerTimeout.current) clearTimeout(winnerTimeout.current);
+    countdownInProgress.current = false;
+    resetPointers();
+  };
 
   useEffect(() => {
     const pointerCount = pointers.size;
@@ -52,8 +65,14 @@ export const GameBoard = () => {
         if (candidates.length > 0) {
           const winner = candidates[Math.floor(Math.random() * candidates.length)];
           setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
+          setWinnerInfo({ x: winner.x, y: winner.y, number: winner.number });
+          // Start 5s timer to reset after winner is shown
+          winnerTimeout.current = setTimeout(() => {
+            resetGame();
+          }, 5000);
         } else {
           setSelectionState({ selecting: false, selectedId: null, countdown: 0 });
+          setWinnerInfo(null);
         }
         countdownInProgress.current = false;
       }, 3000);
@@ -61,8 +80,10 @@ export const GameBoard = () => {
     // Only reset selection state if not currently selecting (i.e., before countdown starts)
     if (pointerCount === 0 && !countdownInProgress.current && selectionState.selectedId === null) {
       setSelectionState({ selecting: false, selectedId: null, countdown: 3 });
+      setWinnerInfo(null);
       if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
       if (countdownInterval.current) clearInterval(countdownInterval.current);
+      if (winnerTimeout.current) clearTimeout(winnerTimeout.current);
     }
     // Track the last non-empty pointer set for winner selection if all pointers are removed
     if (pointerCount > 0) {
@@ -73,6 +94,7 @@ export const GameBoard = () => {
     return () => {
       if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
       if (countdownInterval.current) clearInterval(countdownInterval.current);
+      if (winnerTimeout.current) clearTimeout(winnerTimeout.current);
       countdownInProgress.current = false;
     };
   }, [pointers.size]);
@@ -182,7 +204,7 @@ export const GameBoard = () => {
         ))}
       </div>
       {/* Show all circles if not selected, otherwise only the winner */}
-      {selectionState.selectedId === null
+      {selectionState.selectedId === null && !winnerInfo
         ? Array.from(pointers.values()).map(pointer => {
             const p = pointer as any;
             return (
@@ -195,18 +217,15 @@ export const GameBoard = () => {
               />
             );
           })
-        : Array.from(pointers.values()).map(pointer => {
-            const p = pointer as any;
-            return p.id === selectionState.selectedId ? (
-              <TouchCircle
-                key={p.id}
-                id={p.id}
-                position={{ x: (p.x / window.innerWidth) * 100, y: (p.y / window.innerHeight) * 100 }}
-                number={p.number}
-                size={160}
-              />
-            ) : null;
-          })}
+        : winnerInfo && (
+            <TouchCircle
+              key={"winner"}
+              id={-999}
+              position={{ x: (winnerInfo.x / window.innerWidth) * 100, y: (winnerInfo.y / window.innerHeight) * 100 }}
+              number={winnerInfo.number}
+              size={160}
+            />
+          )}
       {/* Top-right control buttons */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">
         <button
@@ -219,7 +238,7 @@ export const GameBoard = () => {
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Restart"
-          onClick={() => alert('Restart clicked!')}
+          onClick={resetGame}
         >
           <span role="img" aria-label="restart">🔄</span>
         </button>
