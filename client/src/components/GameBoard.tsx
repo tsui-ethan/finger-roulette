@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
+import { useAudio } from "@/lib/stores/useAudio";
 
 export const GameBoard = () => {
   const gameState = useGameState();
@@ -25,13 +26,15 @@ export const GameBoard = () => {
   const countdownInProgress = useRef(false);
   const winnerTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Sound effects
-  const hitSound = useRef<HTMLAudioElement | null>(null);
-  const successSound = useRef<HTMLAudioElement | null>(null);
-  // Only create Audio objects once
+  // Zustand audio store
+  const audio = useAudio();
+
+  // Register all sounds with Zustand on mount
   useEffect(() => {
-    hitSound.current = new window.Audio('/sounds/hit.mp3');
-    successSound.current = new window.Audio('/sounds/success.mp3');
+    audio.setHitSound(new window.Audio('/sounds/hit.mp3'));
+    audio.setTickSound(new window.Audio('/sounds/tick.mp3'));
+    audio.setSuccessSound(new window.Audio('/sounds/success.mp3'));
+    audio.setRestartSound(new window.Audio('/sounds/restart.mp3'));
   }, []);
 
   // Helper to reset the game state
@@ -43,6 +46,7 @@ export const GameBoard = () => {
     if (winnerTimeout.current) clearTimeout(winnerTimeout.current);
     countdownInProgress.current = false;
     resetPointers();
+    audio.playRestart();
   };
 
   useEffect(() => {
@@ -60,6 +64,7 @@ export const GameBoard = () => {
         setSelectionState(prev => {
           if (!prev.selecting) return prev;
           if (localCount > 0) {
+            audio.playTick();
             return { ...prev, countdown: localCount };
           } else {
             clearInterval(countdownInterval.current!);
@@ -76,10 +81,7 @@ export const GameBoard = () => {
           setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
           setWinnerInfo({ x: winner.x, y: winner.y, number: winner.number });
           // Play winner sound
-          if (successSound.current) {
-            successSound.current.currentTime = 0;
-            successSound.current.play();
-          }
+          audio.playSuccess();
           // Start 5s timer to reset after winner is shown
           winnerTimeout.current = setTimeout(() => {
             resetGame();
@@ -118,10 +120,7 @@ export const GameBoard = () => {
       if (e.button !== 0) return;
       pointerDownRef.current = true;
       addPointer(9999, e.clientX, e.clientY);
-      if (hitSound.current) {
-        hitSound.current.currentTime = 0;
-        hitSound.current.play();
-      }
+      audio.playHit();
     };
     const handlePointerMove = (e: MouseEvent) => {
       if (!pointerDownRef.current) return;
@@ -139,17 +138,14 @@ export const GameBoard = () => {
       window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('mouseup', handlePointerUp);
     };
-  }, [addPointer, updatePointer, removePointer]);
+  }, [addPointer, updatePointer, removePointer, audio]);
 
   const touchRef = useMultiTouch({
     onTouchStart: (touches) => {
       for (let i = 0; i < touches.length; i++) {
         const t = touches[i];
         addPointer(t.identifier, t.clientX, t.clientY);
-        if (hitSound.current) {
-          hitSound.current.currentTime = 0;
-          hitSound.current.play();
-        }
+        audio.playHit();
       }
     },
     onTouchMove: (touches) => {
@@ -281,9 +277,9 @@ export const GameBoard = () => {
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Mute/Unmute"
-          onClick={() => alert('Mute/Unmute clicked!')}
+          onClick={audio.toggleMute}
         >
-          <span role="img" aria-label="mute">🔊</span>
+          <span role="img" aria-label="mute">{audio.isMuted ? '🔇' : '🔊'}</span>
         </button>
       </div>
     </div>
