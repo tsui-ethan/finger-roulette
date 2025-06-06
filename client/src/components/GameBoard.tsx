@@ -25,6 +25,15 @@ export const GameBoard = () => {
   const countdownInProgress = useRef(false);
   const winnerTimeout = useRef<NodeJS.Timeout | null>(null);
 
+  // Sound effects
+  const hitSound = useRef<HTMLAudioElement | null>(null);
+  const successSound = useRef<HTMLAudioElement | null>(null);
+  // Only create Audio objects once
+  useEffect(() => {
+    hitSound.current = new window.Audio('/sounds/hit.mp3');
+    successSound.current = new window.Audio('/sounds/success.mp3');
+  }, []);
+
   // Helper to reset the game state
   const resetGame = () => {
     setSelectionState({ selecting: false, selectedId: null, countdown: 3 });
@@ -66,6 +75,11 @@ export const GameBoard = () => {
           const winner = candidates[Math.floor(Math.random() * candidates.length)];
           setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
           setWinnerInfo({ x: winner.x, y: winner.y, number: winner.number });
+          // Play winner sound
+          if (successSound.current) {
+            successSound.current.currentTime = 0;
+            successSound.current.play();
+          }
           // Start 5s timer to reset after winner is shown
           winnerTimeout.current = setTimeout(() => {
             resetGame();
@@ -104,6 +118,10 @@ export const GameBoard = () => {
       if (e.button !== 0) return;
       pointerDownRef.current = true;
       addPointer(9999, e.clientX, e.clientY);
+      if (hitSound.current) {
+        hitSound.current.currentTime = 0;
+        hitSound.current.play();
+      }
     };
     const handlePointerMove = (e: MouseEvent) => {
       if (!pointerDownRef.current) return;
@@ -128,6 +146,10 @@ export const GameBoard = () => {
       for (let i = 0; i < touches.length; i++) {
         const t = touches[i];
         addPointer(t.identifier, t.clientX, t.clientY);
+        if (hitSound.current) {
+          hitSound.current.currentTime = 0;
+          hitSound.current.play();
+        }
       }
     },
     onTouchMove: (touches) => {
