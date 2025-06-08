@@ -4,6 +4,7 @@ import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
 import { useAudio } from "@/lib/stores/useAudio";
 import { SettingsPage } from "./SettingsPage";
+import { InstructionsPage } from "./InstructionsPage";
 
 export const GameBoard = () => {
   const gameState = useGameState();
@@ -21,6 +22,7 @@ export const GameBoard = () => {
   const [selectionState, setSelectionState] = useState<{ selecting: boolean; selectedId: number | null; countdown: number }>({ selecting: false, selectedId: null, countdown: 3 });
   const [winnerInfo, setWinnerInfo] = useState<{ x: number; y: number; number: number } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const selectionTimeout = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
   const prevPointerCount = useRef(0);
@@ -261,7 +263,7 @@ export const GameBoard = () => {
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Instructions"
-          onClick={() => alert('Instructions clicked!')}
+          onClick={() => setShowInstructions(true)}
         >
           <span role="img" aria-label="instructions">❓</span>
         </button>
@@ -282,6 +284,9 @@ export const GameBoard = () => {
       </div>
       {showSettings && (
         <SettingsPage onBack={() => setShowSettings(false)} />
+      )}
+      {showInstructions && (
+        <InstructionsPage onBack={() => setShowInstructions(false)} />
       )}
     </div>
   );
