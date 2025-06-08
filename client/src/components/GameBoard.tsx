@@ -18,7 +18,6 @@ export const GameBoard = () => {
   }: any = gameState;
 
   const pointerDownRef = useRef(false);
-  // --- Countdown and selection state ---
   const [selectionState, setSelectionState] = useState<{ selecting: boolean; selectedId: number | null; countdown: number }>({ selecting: false, selectedId: null, countdown: 3 });
   const [winnerInfo, setWinnerInfo] = useState<{ x: number; y: number; number: number } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -29,8 +28,6 @@ export const GameBoard = () => {
   const prevPointerSet = useRef<any[]>([]);
   const countdownInProgress = useRef(false);
   const winnerTimeout = useRef<NodeJS.Timeout | null>(null);
-
-  // Zustand audio store
   const audio = useAudio();
 
   // Register all sounds with Zustand on mount
@@ -195,14 +192,21 @@ export const GameBoard = () => {
     >
       {/* Instructions and countdown/winner text */}
       <div className="absolute left-1/2 top-8 -translate-x-1/2 z-50 text-2xl font-bold text-white drop-shadow-lg">
-        {pointers.size === 0 && selectionState.selectedId === null && (
+        {pointers.size === 0 && selectionState.selectedId === null &&
+          !showSettings && !showInstructions && (
           <span>Touch or click to join</span>
         )}
         {pointers.size > 0 && selectionState.selecting && (
           <span>Get ready... {selectionState.countdown}</span>
         )}
         {selectionState.selectedId !== null && (
-          <span className="text-yellow-300 animate-bounce">🎉 Player Selected! 🎉</span>
+          (() => {
+            const winnerPointer = pointers.get(selectionState.selectedId);
+            const winnerNumber = winnerPointer ? winnerPointer.number : selectionState.selectedId + 1;
+            return (
+              <span className="text-yellow-300 animate-bounce">🎉 Winner: {winnerNumber} 🎉</span>
+            );
+          })()
         )}
       </div>
       <div className="absolute inset-0 overflow-hidden">
@@ -223,23 +227,26 @@ export const GameBoard = () => {
       </div>
       {/* Show all circles if not selected, otherwise only the winner */}
       {selectionState.selectedId === null && !winnerInfo
-        ? Array.from(pointers.values()).map(pointer => {
-            const p = pointer as any;
-            return (
-              <TouchCircle
-                key={p.id}
-                id={p.id}
-                position={{ x: (p.x / window.innerWidth) * 100, y: (p.y / window.innerHeight) * 100 }}
-                number={p.number}
-                size={120}
-              />
-            );
-          })
+        ? Array.from(pointers.values()).map((pointer: any) => (
+            <TouchCircle
+              key={pointer.id}
+              id={pointer.id}
+              position={{
+                x: (pointer.x / window.innerWidth) * 100,
+                y: (pointer.y / window.innerHeight) * 100
+              }}
+              number={pointer.number}
+              size={90}
+            />
+          ))
         : winnerInfo && (
             <TouchCircle
               key={"winner"}
               id={-999}
-              position={{ x: (winnerInfo.x / window.innerWidth) * 100, y: (winnerInfo.y / window.innerHeight) * 100 }}
+              position={{
+                x: (winnerInfo.x / window.innerWidth) * 100,
+                y: (winnerInfo.y / window.innerHeight) * 100
+              }}
               number={winnerInfo.number}
               size={160}
             />
@@ -266,13 +273,6 @@ export const GameBoard = () => {
           onClick={() => setShowInstructions(true)}
         >
           <span role="img" aria-label="instructions">❓</span>
-        </button>
-        <button
-          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
-          title="Game Mode"
-          onClick={() => alert('Game mode switch clicked!')}
-        >
-          <span role="img" aria-label="game mode">🎮</span>
         </button>
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
