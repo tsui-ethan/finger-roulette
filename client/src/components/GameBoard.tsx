@@ -3,6 +3,7 @@ import { TouchCircle } from "./TouchCircle";
 import { useGameState } from "@/lib/stores/useGameState";
 import { useMultiTouch } from "@/lib/hooks/useMultiTouch";
 import { useAudio } from "@/lib/stores/useAudio";
+import { SettingsPage } from "./SettingsPage";
 
 export const GameBoard = () => {
   const gameState = useGameState();
@@ -19,6 +20,7 @@ export const GameBoard = () => {
   // --- Countdown and selection state ---
   const [selectionState, setSelectionState] = useState<{ selecting: boolean; selectedId: number | null; countdown: number }>({ selecting: false, selectedId: null, countdown: 3 });
   const [winnerInfo, setWinnerInfo] = useState<{ x: number; y: number; number: number } | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const selectionTimeout = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
   const prevPointerCount = useRef(0);
@@ -245,7 +247,7 @@ export const GameBoard = () => {
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Settings"
-          onClick={() => alert('Settings clicked!')}
+          onClick={() => setShowSettings(true)}
         >
           <span role="img" aria-label="settings">⚙️</span>
         </button>
@@ -278,6 +280,9 @@ export const GameBoard = () => {
           <span role="img" aria-label="mute">{audio.isMuted ? '🔇' : '🔊'}</span>
         </button>
       </div>
+      {showSettings && (
+        <SettingsPage onBack={() => setShowSettings(false)} />
+      )}
     </div>
   );
 };
