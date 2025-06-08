@@ -51,26 +51,24 @@ export const GameBoard = () => {
 
   useEffect(() => {
     const pointerCount = pointers.size;
-    // Start countdown if going from 0 to >0 pointers and not already selecting
     if (
       prevPointerCount.current === 0 && pointerCount > 0 &&
       !countdownInProgress.current
     ) {
       countdownInProgress.current = true;
       setSelectionState({ selecting: true, selectedId: null, countdown: 3 });
-      let localCount = 3;
+      let countdownValue = 3;
+      // Play tick immediately for 3
+      audio.playTick();
       countdownInterval.current = setInterval(() => {
-        localCount -= 1;
-        setSelectionState(prev => {
-          if (!prev.selecting) return prev;
-          if (localCount > 0) {
-            audio.playTick();
-            return { ...prev, countdown: localCount };
-          } else {
-            clearInterval(countdownInterval.current!);
-            return { ...prev, countdown: 0 };
-          }
-        });
+        countdownValue--;
+        if (countdownValue > 0) {
+          audio.playTick(); // Play tick for 2 and 1
+        }
+        setSelectionState(prev => ({ ...prev, countdown: countdownValue }));
+        if (countdownValue === 0) {
+          clearInterval(countdownInterval.current!);
+        }
       }, 1000);
       selectionTimeout.current = setTimeout(() => {
         // Pick winner from current or last pointer set
@@ -80,9 +78,7 @@ export const GameBoard = () => {
           const winner = candidates[Math.floor(Math.random() * candidates.length)];
           setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
           setWinnerInfo({ x: winner.x, y: winner.y, number: winner.number });
-          // Play winner sound
           audio.playSuccess();
-          // Start 5s timer to reset after winner is shown
           winnerTimeout.current = setTimeout(() => {
             resetGame();
           }, 5000);
