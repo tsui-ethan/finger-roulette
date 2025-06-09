@@ -253,6 +253,14 @@ export const GameBoard = () => {
           )}
       {/* Top-right control buttons */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">
+        {/* Game mode switch button */}
+        <button
+          className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
+          title="Switch Game Mode"
+          onClick={() => setGameMode((g) => g === "pointer" ? "circle" : "pointer")}
+        >
+          <span role="img" aria-label="switch">⇄</span>
+        </button>
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Settings"
