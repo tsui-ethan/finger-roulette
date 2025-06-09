@@ -208,6 +208,22 @@ export const GameBoard = () => {
   });
   const [selectedCircle, setSelectedCircle] = useState<number | null>(null);
 
+  // --- Circle mode pressed state ---
+  const [pressedCircles, setPressedCircles] = useState<Set<number>>(new Set());
+
+  // When a circle is pressed, add it to the set
+  const handleCirclePress = (id: number) => {
+    setPressedCircles((prev) => new Set(prev).add(id));
+    // Optionally play a sound here
+  };
+
+  // When a winner is picked or game resets, clear pressed state
+  useEffect(() => {
+    if (gameMode !== 'circle' || selectedCircle !== null || phase === 'reveal') {
+      setPressedCircles(new Set());
+    }
+  }, [gameMode, selectedCircle, phase]);
+
   return (
     <div
       ref={touchRef}
@@ -290,16 +306,20 @@ export const GameBoard = () => {
                 top: `${circle.y}px`,
                 transform: 'translate(-50%, -50%)',
                 zIndex: 20,
-                boxShadow: selectedCircle === circle.id ? '0 0 0 8px #fde047, 0 0 32px #fde047' : undefined,
+                boxShadow: selectedCircle === circle.id || pressedCircles.has(circle.id)
+                  ? '0 0 0 12px #fde047, 0 0 32px #fde047, 0 0 64px #fde04799' : undefined,
+                background: pressedCircles.has(circle.id)
+                  ? 'rgba(255, 221, 51, 0.35)' : undefined,
                 cursor: 'pointer',
+                transition: 'box-shadow 0.2s, background 0.2s',
               }}
-              onClick={() => setSelectedCircle(circle.id)}
+              onClick={() => handleCirclePress(circle.id)}
             >
               <TouchCircle
                 id={circle.id}
-                position={{ x: 50, y: 50 }} // TouchCircle centers at parent
+                position={{ x: 50, y: 50 }}
                 number={circle.number}
-                size={121.5} // increased by 35%
+                size={121.5}
               />
             </div>
           ))}
