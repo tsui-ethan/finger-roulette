@@ -22,6 +22,7 @@ export const GameBoard = () => {
   const [winnerInfo, setWinnerInfo] = useState<{ x: number; y: number; number: number } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [gameMode, setGameMode] = useState<'pointer' | 'circle'>('pointer');
   const selectionTimeout = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
   const prevPointerCount = useRef(0);
@@ -185,6 +186,28 @@ export const GameBoard = () => {
     }
   };
 
+  // --- Circle mode preset positions ---
+  const NUM_CIRCLES = 8;
+  const CIRCLE_RADIUS = 243; // px (increased by 35%)
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  const CIRCLE_CENTER_X = windowSize.width / 2;
+  const CIRCLE_CENTER_Y = windowSize.height / 2;
+  const presetCircles = Array.from({ length: NUM_CIRCLES }, (_, i) => {
+    const angle = (2 * Math.PI * i) / NUM_CIRCLES - Math.PI / 2;
+    return {
+      x: CIRCLE_CENTER_X + CIRCLE_RADIUS * Math.cos(angle),
+      y: CIRCLE_CENTER_Y + CIRCLE_RADIUS * Math.sin(angle),
+      number: i + 1,
+      id: i
+    };
+  });
+  const [selectedCircle, setSelectedCircle] = useState<number | null>(null);
+
   return (
     <div
       ref={touchRef}
@@ -192,21 +215,25 @@ export const GameBoard = () => {
     >
       {/* Instructions and countdown/winner text */}
       <div className="absolute left-1/2 top-8 -translate-x-1/2 z-50 text-2xl font-bold text-white drop-shadow-lg">
-        {pointers.size === 0 && selectionState.selectedId === null &&
+        {gameMode === 'pointer' && pointers.size === 0 && selectionState.selectedId === null &&
           !showSettings && !showInstructions && (
           <span>Touch or click to join</span>
         )}
-        {pointers.size > 0 && selectionState.selecting && (
+        {gameMode === 'pointer' && pointers.size > 0 && selectionState.selecting && (
           <span>Get ready... {selectionState.countdown}</span>
         )}
-        {selectionState.selectedId !== null && (
-          (() => {
-            const winnerPointer = pointers.get(selectionState.selectedId);
-            const winnerNumber = winnerPointer ? winnerPointer.number : selectionState.selectedId + 1;
-            return (
-              <span className="text-yellow-300 animate-bounce">🎉 Winner: {winnerNumber} 🎉</span>
-            );
-          })()
+        {gameMode === 'pointer' && selectionState.selectedId !== null && (() => {
+          const winnerPointer = pointers.get(selectionState.selectedId);
+          const winnerNumber = winnerPointer ? winnerPointer.number : selectionState.selectedId + 1;
+          return (
+            <span className="text-yellow-300 animate-bounce">🎉 Winner: {winnerNumber} 🎉</span>
+          );
+        })()}
+        {gameMode === 'circle' && !showSettings && !showInstructions && (
+          <span>Tap a circle to select</span>
+        )}
+        {gameMode === 'circle' && selectedCircle !== null && (
+          <span className="text-yellow-300 animate-bounce">🎉 Winner: {selectedCircle + 1} 🎉</span>
         )}
       </div>
       <div className="absolute inset-0 overflow-hidden">
@@ -225,8 +252,8 @@ export const GameBoard = () => {
           />
         ))}
       </div>
-      {/* Show all circles if not selected, otherwise only the winner */}
-      {selectionState.selectedId === null && !winnerInfo
+      {/* Show pointer mode circles */}
+      {gameMode === 'pointer' && selectionState.selectedId === null && !winnerInfo
         ? Array.from(pointers.values()).map((pointer: any) => (
             <TouchCircle
               key={pointer.id}
@@ -239,7 +266,7 @@ export const GameBoard = () => {
               size={90}
             />
           ))
-        : winnerInfo && (
+        : gameMode === 'pointer' && winnerInfo && (
             <TouchCircle
               key={"winner"}
               id={-999}
@@ -251,6 +278,33 @@ export const GameBoard = () => {
               size={160}
             />
           )}
+      {/* Show circle mode preset circles */}
+      {gameMode === 'circle' && (
+        <>
+          {presetCircles.map((circle) => (
+            <div
+              key={circle.id}
+              style={{
+                position: 'absolute',
+                left: `${circle.x}px`,
+                top: `${circle.y}px`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 20,
+                boxShadow: selectedCircle === circle.id ? '0 0 0 8px #fde047, 0 0 32px #fde047' : undefined,
+                cursor: 'pointer',
+              }}
+              onClick={() => setSelectedCircle(circle.id)}
+            >
+              <TouchCircle
+                id={circle.id}
+                position={{ x: 50, y: 50 }} // TouchCircle centers at parent
+                number={circle.number}
+                size={121.5} // increased by 35%
+              />
+            </div>
+          ))}
+        </>
+      )}
       {/* Top-right control buttons */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">
         {/* Game mode switch button */}
