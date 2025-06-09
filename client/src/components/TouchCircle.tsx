@@ -5,12 +5,14 @@ interface TouchCircleProps {
   position: { x: number; y: number };
   number: number;
   size: number;
+  highlight?: boolean;
 }
 
-export const TouchCircle = ({ id, position, number, size }: TouchCircleProps) => {
+export const TouchCircle = ({ id, position, number, size, highlight }: TouchCircleProps) => {
+  // Only highlight if highlight is true (clicked) and ONLY in gameMode 2 (handled by parent)
   return (
     <div
-      className="absolute rounded-full border-4 border-yellow-400 bg-yellow-500/20 shadow-lg shadow-yellow-400/50 flex items-center justify-center font-bold text-white transform -translate-x-1/2 -translate-y-1/2 select-none"
+      className="absolute rounded-full flex items-center justify-center font-bold transform -translate-x-1/2 -translate-y-1/2 select-none"
       style={{
         left: `${position.x}%`,
         top: `${position.y}%`,
@@ -21,12 +23,20 @@ export const TouchCircle = ({ id, position, number, size }: TouchCircleProps) =>
         boxSizing: 'border-box',
         touchAction: 'none',
         userSelect: 'none',
-        background: 'rgba(255, 221, 51, 0.15)'
+        background: highlight ? '#f6e05e' : 'rgba(255, 221, 51, 0.15)',
+        border: 'none',
+        boxShadow: 'none',
+        transition: 'background 0.2s',
       }}
       aria-label={`Touch circle ${number}`}
       role="button"
     >
-      <span className="z-10 relative text-white drop-shadow-lg">{number}</span>
+      <span
+        style={highlight ? { color: '#222', textShadow: 'none' } : {}}
+        className={highlight ? 'z-10 relative' : 'z-10 relative text-white drop-shadow-lg'}
+      >
+        {number}
+      </span>
     </div>
   );
 };

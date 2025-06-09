@@ -210,19 +210,51 @@ export const GameBoard = () => {
 
   // --- Circle mode pressed state ---
   const [pressedCircles, setPressedCircles] = useState<Set<number>>(new Set());
+  const [circleCountdown, setCircleCountdown] = useState<number | null>(null);
+  const [circleWinner, setCircleWinner] = useState<number | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // When a circle is pressed, add it to the set
+  // When a circle is pressed, add it to the set and start countdown if not started
   const handleCirclePress = (id: number) => {
-    setPressedCircles((prev) => new Set(prev).add(id));
-    // Optionally play a sound here
+    if (circleWinner !== null) return; // Don't allow more presses after winner
+    setPressedCircles((prev) => {
+      if (!prev.has(id)) {
+        const newSet = new Set(prev);
+        newSet.add(id);
+        // Start countdown immediately if this is the first press
+        if (newSet.size === 1 && circleCountdown === null) {
+          setCircleCountdown(3);
+          let countdown = 3;
+          if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = setInterval(() => {
+            countdown--;
+            setCircleCountdown(countdown);
+            if (countdown === 0) {
+              clearInterval(countdownIntervalRef.current!);
+              // Pick a random winner from pressedCircles (including this one)
+              const pressedArr = Array.from(newSet);
+              if (pressedArr.length > 0) {
+                const winner = pressedArr[Math.floor(Math.random() * pressedArr.length)];
+                setCircleWinner(winner);
+              }
+            }
+          }, 1000);
+        }
+        return newSet;
+      }
+      return prev;
+    });
   };
 
-  // When a winner is picked or game resets, clear pressed state
+  // Reset state when game resets or mode changes
   useEffect(() => {
-    if (gameMode !== 'circle' || selectedCircle !== null || phase === 'reveal') {
+    if (gameMode !== 'circle') {
       setPressedCircles(new Set());
+      setCircleCountdown(null);
+      setCircleWinner(null);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     }
-  }, [gameMode, selectedCircle, phase]);
+  }, [gameMode]);
 
   return (
     <div
@@ -248,8 +280,8 @@ export const GameBoard = () => {
         {gameMode === 'circle' && !showSettings && !showInstructions && (
           <span>Tap a circle to select</span>
         )}
-        {gameMode === 'circle' && selectedCircle !== null && (
-          <span className="text-yellow-300 animate-bounce">🎉 Winner: {selectedCircle + 1} 🎉</span>
+        {gameMode === 'circle' && circleWinner !== null && (
+          <span className="text-yellow-300 animate-bounce">🎉 Winner: {circleWinner + 1} 🎉</span>
         )}
       </div>
       <div className="absolute inset-0 overflow-hidden">
@@ -297,6 +329,17 @@ export const GameBoard = () => {
       {/* Show circle mode preset circles */}
       {gameMode === 'circle' && (
         <>
+          {/* Countdown and winner display */}
+          {circleCountdown !== null && circleCountdown > 0 && circleWinner === null && (
+            <div className="absolute left-1/2 top-24 -translate-x-1/2 z-50 text-3xl font-bold text-yellow-200 drop-shadow-lg">
+              Get ready... {circleCountdown}
+            </div>
+          )}
+          {circleWinner !== null && (
+            <div className="absolute left-1/2 top-24 -translate-x-1/2 z-50 text-3xl font-bold text-yellow-300 animate-bounce drop-shadow-lg">
+              🎉 Winner: {circleWinner + 1} 🎉
+            </div>
+          )}
           {presetCircles.map((circle) => (
             <div
               key={circle.id}
@@ -306,10 +349,6 @@ export const GameBoard = () => {
                 top: `${circle.y}px`,
                 transform: 'translate(-50%, -50%)',
                 zIndex: 20,
-                boxShadow: selectedCircle === circle.id || pressedCircles.has(circle.id)
-                  ? '0 0 0 12px #fde047, 0 0 32px #fde047, 0 0 64px #fde04799' : undefined,
-                background: pressedCircles.has(circle.id)
-                  ? 'rgba(255, 221, 51, 0.35)' : undefined,
                 cursor: 'pointer',
                 transition: 'box-shadow 0.2s, background 0.2s',
               }}
@@ -320,6 +359,7 @@ export const GameBoard = () => {
                 position={{ x: 50, y: 50 }}
                 number={circle.number}
                 size={121.5}
+                highlight={pressedCircles.has(circle.id) || circleWinner === circle.id}
               />
             </div>
           ))}
