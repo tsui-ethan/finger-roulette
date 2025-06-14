@@ -185,7 +185,7 @@ export const SettingsPage = ({ onBack, numCircles, setNumCircles }: SettingsPage
                   </button>
                 </div>
                 <div className="text-xs text-gray-300">Choose between 2 and 20 circles for game mode 2.</div>
-                <div className="text-xs text-yellow-300 font-semibold">8 circles is recommended for best experience.</div>
+                <div className="text-xs text-yellow-300 font-semibold mt-1">8 players is recommended for best experience.</div>
               </CardContent>
             </Card>
 

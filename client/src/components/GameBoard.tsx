@@ -197,13 +197,8 @@ export const GameBoard = () => {
   };
 
   // --- Circle mode preset positions ---
-  const [numCircles, setNumCircles] = useState(8);
-  // Dynamically calculate circle size and radius for even spacing
-  const BASE_CIRCLE_SIZE = 121.5; // px for 8 circles
-  const BASE_RADIUS = 243; // px for 8 circles
-  // Adjust radius and size based on number of circles
-  const CIRCLE_RADIUS = Math.max(120, BASE_RADIUS * (8 / numCircles));
-  const CIRCLE_SIZE = Math.max(50, BASE_CIRCLE_SIZE * (8 / numCircles));
+  const [numCircles, setNumCircles] = useState(8); // was: const NUM_CIRCLES = 8;
+  const CIRCLE_RADIUS = 243; // px (increased by 35%)
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -479,7 +474,7 @@ export const GameBoard = () => {
                 id={circle.id}
                 position={{ x: 50, y: 50 }}
                 number={circle.number}
-                size={CIRCLE_SIZE}
+                size={121.5}
                 highlight={pressedCircles.has(circle.id) || circleWinner === circle.id}
               />
             </div>
