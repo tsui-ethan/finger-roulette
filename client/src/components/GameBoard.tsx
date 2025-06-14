@@ -60,12 +60,11 @@ export const GameBoard = () => {
       countdownInProgress.current = true;
       setSelectionState({ selecting: true, selectedId: null, countdown: 3 });
       let countdownValue = 3;
-      // Play tick immediately for 3
       audio.playTick();
       countdownInterval.current = setInterval(() => {
         countdownValue--;
         if (countdownValue > 0) {
-          audio.playTick(); // Play tick for 2 and 1
+          audio.playTick();
         }
         setSelectionState(prev => ({ ...prev, countdown: countdownValue }));
         if (countdownValue === 0) {
@@ -73,22 +72,27 @@ export const GameBoard = () => {
         }
       }, 1000);
       selectionTimeout.current = setTimeout(() => {
-        // Pick winner from current or last pointer set
-        const pointerArr = Array.from(pointers.values());
-        const candidates = pointerArr.length > 0 ? pointerArr : prevPointerSet.current;
-        if (candidates.length > 0) {
-          const winner = candidates[Math.floor(Math.random() * candidates.length)];
-          setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
-          setWinnerInfo({ x: winner.x, y: winner.y, number: winner.number });
-          audio.playSuccess();
-          winnerTimeout.current = setTimeout(() => {
-            resetGame();
-          }, 5000);
-        } else {
-          setSelectionState({ selecting: false, selectedId: null, countdown: 0 });
-          setWinnerInfo(null);
-        }
-        countdownInProgress.current = false;
+        // Pure random selection from current pointers
+        setTimeout(() => {
+          const pointerArr = Array.from(gameState.pointers.values());
+          const candidates = pointerArr.length > 0 ? pointerArr : prevPointerSet.current;
+          if (candidates.length > 0) {
+            // Step 3: Generate random index
+            const randomIdx = Math.floor(Math.random() * candidates.length);
+            // Step 4: Select user at that index
+            const winner = candidates[randomIdx];
+            setSelectionState({ selecting: false, selectedId: winner.id, countdown: 0 });
+            setWinnerInfo({ x: winner.x, y: winner.y, number: winner.number });
+            audio.playSuccess();
+            winnerTimeout.current = setTimeout(() => {
+              resetGame();
+            }, 5000);
+          } else {
+            setSelectionState({ selecting: false, selectedId: null, countdown: 0 });
+            setWinnerInfo(null);
+          }
+          countdownInProgress.current = false;
+        }, 0);
       }, 3000);
     }
     // Only reset selection state if not currently selecting (i.e., before countdown starts)
@@ -213,35 +217,14 @@ export const GameBoard = () => {
   const [circleCountdown, setCircleCountdown] = useState<number | null>(null);
   const [circleWinner, setCircleWinner] = useState<number | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const circleCountdownInProgress = useRef(false);
 
-  // Start countdown as soon as at least one circle is pressed (and only once)
+  // Remove countdown start logic from useEffect, only keep cleanup
   useEffect(() => {
-    if (
-      gameMode === 'circle' &&
-      pressedCircles.size > 0 &&
-      circleCountdown === null &&
-      circleWinner === null
-    ) {
-      setCircleCountdown(3);
-      let countdown = 3;
-      countdownIntervalRef.current = setInterval(() => {
-        countdown--;
-        setCircleCountdown(countdown);
-        if (countdown === 0) {
-          clearInterval(countdownIntervalRef.current!);
-          // Pick a random winner from pressedCircles
-          const pressedArr = Array.from(pressedCircles);
-          if (pressedArr.length > 0) {
-            const winner = pressedArr[Math.floor(Math.random() * pressedArr.length)];
-            setCircleWinner(winner);
-          }
-        }
-      }, 1000);
-    }
     return () => {
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
-  }, [gameMode, pressedCircles, circleCountdown, circleWinner]);
+  }, []);
 
   // Reset state when game resets or mode changes
   useEffect(() => {
@@ -249,13 +232,65 @@ export const GameBoard = () => {
       setPressedCircles(new Set());
       setCircleCountdown(null);
       setCircleWinner(null);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      circleCountdownInProgress.current = false;
     }
   }, [gameMode]);
 
-  // When a circle is pressed, add it to the set
+  // When a circle is pressed, add it to the set and start countdown if needed
   const handleCirclePress = (id: number) => {
-    if (circleWinner !== null) return; // Don't allow more presses after winner
-    setPressedCircles((prev) => new Set(prev).add(id));
+    if (circleWinner !== null) {
+      // Start a new round if a winner was just chosen
+      setPressedCircles(new Set([id]));
+      setCircleCountdown(3);
+      setCircleWinner(null);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      circleCountdownInProgress.current = true;
+      let countdown = 3;
+      countdownIntervalRef.current = setInterval(() => {
+        countdown--;
+        setCircleCountdown(countdown);
+        if (countdown === 0) {
+          clearInterval(countdownIntervalRef.current!);
+          setCircleCountdown(null);
+          circleCountdownInProgress.current = false;
+          setCircleWinner(id); // Only the new clicker is the winner
+        }
+      }, 1000);
+      return;
+    }
+    setPressedCircles((prev) => {
+      const newSet = new Set(prev).add(id);
+      // Start countdown immediately if not in progress and no winner
+      if (!circleCountdownInProgress.current && newSet.size > 0 && circleCountdown === null && circleWinner === null) {
+        setCircleCountdown(3);
+        if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+        circleCountdownInProgress.current = true;
+        let countdown = 3;
+        countdownIntervalRef.current = setInterval(() => {
+          countdown--;
+          setCircleCountdown(countdown);
+          if (countdown === 0) {
+            clearInterval(countdownIntervalRef.current!);
+            setCircleCountdown(null);
+            circleCountdownInProgress.current = false;
+            // Pure random selection from pressed circles
+            setPressedCircles((latestSet) => {
+              const pressedArr = Array.from(latestSet);
+              if (pressedArr.length > 0) {
+                // Step 3: Generate random index
+                const randomIdx = Math.floor(Math.random() * pressedArr.length);
+                // Step 4: Select user at that index
+                const winner = pressedArr[randomIdx];
+                setCircleWinner(winner);
+              }
+              return latestSet;
+            });
+          }
+        }, 1000);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -337,6 +372,54 @@ export const GameBoard = () => {
       {/* Show circle mode preset circles */}
       {gameMode === 'circle' && (
         <>
+          {/* Center button to select all circles */}
+          <div
+            style={{
+              position: 'absolute',
+              left: `${CIRCLE_CENTER_X}px`,
+              top: `${CIRCLE_CENTER_Y}px`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 30,
+            }}
+          >
+            <button
+              className="w-24 h-24 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg flex items-center justify-center text-xl font-bold border-4 border-white focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all text-center px-2"
+              onClick={() => {
+                // Select all circles and start countdown if not already started
+                setPressedCircles((prev) => {
+                  const all = new Set(Array.from({ length: NUM_CIRCLES }, (_, i) => i));
+                  // If countdown hasn't started, trigger it as if a circle was pressed
+                  if (!circleCountdownInProgress.current && circleCountdown === null && circleWinner === null) {
+                    setCircleCountdown(3);
+                    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+                    circleCountdownInProgress.current = true;
+                    let countdown = 3;
+                    countdownIntervalRef.current = setInterval(() => {
+                      countdown--;
+                      setCircleCountdown(countdown);
+                      if (countdown === 0) {
+                        clearInterval(countdownIntervalRef.current!);
+                        setCircleCountdown(null);
+                        circleCountdownInProgress.current = false;
+                        // Pure random selection from all pressed circles
+                        const pressedArr = Array.from(all);
+                        if (pressedArr.length > 0) {
+                          const randomIdx = Math.floor(Math.random() * pressedArr.length);
+                          const winner = pressedArr[randomIdx];
+                          setCircleWinner(winner);
+                        }
+                      }
+                    }, 1000);
+                  }
+                  return all;
+                });
+              }}
+              disabled={circleCountdown !== null || circleWinner !== null}
+              title="Select All"
+            >
+              Select All
+            </button>
+          </div>
           {/* Countdown and winner display removed from here to ensure only one text is shown */}
           {presetCircles.map((circle) => (
             <div
