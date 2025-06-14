@@ -261,7 +261,8 @@ export const GameBoard = () => {
   return (
     <div
       ref={touchRef}
-      className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 relative overflow-hidden touch-none select-none`}
+      className={`w-full h-full bg-gradient-to-br ${getBackgroundGradient()} transition-all duration-1000 fixed top-0 left-0 right-0 bottom-0 m-0 p-0 z-0 overflow-hidden touch-none select-none`}
+      style={{ touchAction: 'none', userSelect: 'none' }}
     >
       {/* Instructions and countdown/winner text */}
       <div className="absolute left-1/2 top-8 -translate-x-1/2 z-50 text-2xl font-bold text-white drop-shadow-lg">
@@ -276,10 +277,13 @@ export const GameBoard = () => {
           <span className="text-yellow-300 animate-bounce">🎉 Winner: {winnerInfo.number} 🎉</span>
         )}
         {gameMode === 'circle' && !showSettings && !showInstructions && (
-          <span>Tap a circle to select</span>
-        )}
-        {gameMode === 'circle' && circleWinner !== null && (
-          <span className="text-yellow-300 animate-bounce">🎉 Winner: {circleWinner + 1} 🎉</span>
+          <span>
+            {circleWinner !== null
+              ? `🎉 Winner: ${circleWinner + 1} 🎉`
+              : circleCountdown !== null && circleCountdown > 0
+                ? `Get ready... ${circleCountdown}`
+                : 'Tap a circle to select'}
+          </span>
         )}
       </div>
       <div className="absolute inset-0 overflow-hidden">
@@ -333,17 +337,7 @@ export const GameBoard = () => {
       {/* Show circle mode preset circles */}
       {gameMode === 'circle' && (
         <>
-          {/* Countdown and winner display */}
-          {circleCountdown !== null && circleCountdown > 0 && circleWinner === null && (
-            <div className="absolute left-1/2 top-24 -translate-x-1/2 z-50 text-3xl font-bold text-yellow-200 drop-shadow-lg">
-              Get ready... {circleCountdown}
-            </div>
-          )}
-          {circleWinner !== null && (
-            <div className="absolute left-1/2 top-24 -translate-x-1/2 z-50 text-3xl font-bold text-yellow-300 animate-bounce drop-shadow-lg">
-              🎉 Winner: {circleWinner + 1} 🎉
-            </div>
-          )}
+          {/* Countdown and winner display removed from here to ensure only one text is shown */}
           {presetCircles.map((circle) => (
             <div
               key={circle.id}
