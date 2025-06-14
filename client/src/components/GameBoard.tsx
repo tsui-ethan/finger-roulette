@@ -47,8 +47,14 @@ export const GameBoard = () => {
     if (countdownInterval.current) clearInterval(countdownInterval.current);
     if (winnerTimeout.current) clearTimeout(winnerTimeout.current);
     countdownInProgress.current = false;
-    resetPointers();
+    // Reset circle mode state as well
+    setPressedCircles(new Set());
+    setCircleCountdown(null);
+    setCircleWinner(null);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    circleCountdownInProgress.current = false;
     audio.playRestart();
+    resetPointers();
   };
 
   useEffect(() => {
@@ -254,7 +260,16 @@ export const GameBoard = () => {
           clearInterval(countdownIntervalRef.current!);
           setCircleCountdown(null);
           circleCountdownInProgress.current = false;
-          setCircleWinner(id); // Only the new clicker is the winner
+          // Pure random selection from pressed circles
+          setPressedCircles((latestSet) => {
+            const pressedArr = Array.from(latestSet);
+            if (pressedArr.length > 0) {
+              const randomIdx = Math.floor(Math.random() * pressedArr.length);
+              const winner = pressedArr[randomIdx];
+              setCircleWinner(winner);
+            }
+            return latestSet;
+          });
         }
       }, 1000);
       return;
@@ -278,9 +293,7 @@ export const GameBoard = () => {
             setPressedCircles((latestSet) => {
               const pressedArr = Array.from(latestSet);
               if (pressedArr.length > 0) {
-                // Step 3: Generate random index
                 const randomIdx = Math.floor(Math.random() * pressedArr.length);
-                // Step 4: Select user at that index
                 const winner = pressedArr[randomIdx];
                 setCircleWinner(winner);
               }
@@ -385,7 +398,6 @@ export const GameBoard = () => {
             <button
               className="w-24 h-24 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg flex items-center justify-center text-xl font-bold border-4 border-white focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all text-center px-2"
               onClick={() => {
-                // Select all circles and start countdown if not already started
                 setPressedCircles((prev) => {
                   const all = new Set(Array.from({ length: NUM_CIRCLES }, (_, i) => i));
                   // If countdown hasn't started, trigger it as if a circle was pressed
@@ -402,6 +414,28 @@ export const GameBoard = () => {
                         setCircleCountdown(null);
                         circleCountdownInProgress.current = false;
                         // Pure random selection from all pressed circles
+                        const pressedArr = Array.from(all);
+                        if (pressedArr.length > 0) {
+                          const randomIdx = Math.floor(Math.random() * pressedArr.length);
+                          const winner = pressedArr[randomIdx];
+                          setCircleWinner(winner);
+                        }
+                      }
+                    }, 1000);
+                  } else if (circleWinner !== null) {
+                    // If a winner was just chosen, reset for a new round
+                    setCircleCountdown(3);
+                    setCircleWinner(null);
+                    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+                    circleCountdownInProgress.current = true;
+                    let countdown = 3;
+                    countdownIntervalRef.current = setInterval(() => {
+                      countdown--;
+                      setCircleCountdown(countdown);
+                      if (countdown === 0) {
+                        clearInterval(countdownIntervalRef.current!);
+                        setCircleCountdown(null);
+                        circleCountdownInProgress.current = false;
                         const pressedArr = Array.from(all);
                         if (pressedArr.length > 0) {
                           const randomIdx = Math.floor(Math.random() * pressedArr.length);
