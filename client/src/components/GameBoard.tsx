@@ -396,7 +396,8 @@ export const GameBoard = () => {
             }}
           >
             <button
-              className="w-24 h-24 rounded-full bg-yellow-400 hover:bg-yellow-500 shadow-lg flex items-center justify-center text-xl font-bold border-4 border-white focus:outline-none focus:ring-4 focus:ring-yellow-300 transition-all text-center px-2"
+              className="bg-blue-950 hover:bg-blue-800 shadow-lg flex items-center justify-center text-2xl font-bold border-4 border-pink-400 focus:outline-none focus:ring-4 focus:ring-pink-300 transition-all text-center px-2 rounded-xl text-white"
+              style={{ borderRadius: '1rem', width: '9rem', height: '9rem', fontSize: '2.25rem' }}
               onClick={() => {
                 setPressedCircles((prev) => {
                   const all = new Set(Array.from({ length: NUM_CIRCLES }, (_, i) => i));
