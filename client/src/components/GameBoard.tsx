@@ -197,8 +197,13 @@ export const GameBoard = () => {
   };
 
   // --- Circle mode preset positions ---
-  const NUM_CIRCLES = 8;
-  const CIRCLE_RADIUS = 243; // px (increased by 35%)
+  const [numCircles, setNumCircles] = useState(8);
+  // Dynamically calculate circle size and radius for even spacing
+  const BASE_CIRCLE_SIZE = 121.5; // px for 8 circles
+  const BASE_RADIUS = 243; // px for 8 circles
+  // Adjust radius and size based on number of circles
+  const CIRCLE_RADIUS = Math.max(120, BASE_RADIUS * (8 / numCircles));
+  const CIRCLE_SIZE = Math.max(50, BASE_CIRCLE_SIZE * (8 / numCircles));
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -207,8 +212,8 @@ export const GameBoard = () => {
   }, []);
   const CIRCLE_CENTER_X = windowSize.width / 2;
   const CIRCLE_CENTER_Y = windowSize.height / 2;
-  const presetCircles = Array.from({ length: NUM_CIRCLES }, (_, i) => {
-    const angle = (2 * Math.PI * i) / NUM_CIRCLES - Math.PI / 2;
+  const presetCircles = Array.from({ length: numCircles }, (_, i) => {
+    const angle = (2 * Math.PI * i) / numCircles - Math.PI / 2;
     return {
       x: CIRCLE_CENTER_X + CIRCLE_RADIUS * Math.cos(angle),
       y: CIRCLE_CENTER_Y + CIRCLE_RADIUS * Math.sin(angle),
@@ -400,7 +405,7 @@ export const GameBoard = () => {
               style={{ borderRadius: '1rem', width: '9rem', height: '9rem', fontSize: '2.25rem' }}
               onClick={() => {
                 setPressedCircles((prev) => {
-                  const all = new Set(Array.from({ length: NUM_CIRCLES }, (_, i) => i));
+                  const all = new Set(Array.from({ length: numCircles }, (_, i) => i));
                   // If countdown hasn't started, trigger it as if a circle was pressed
                   if (!circleCountdownInProgress.current && circleCountdown === null && circleWinner === null) {
                     setCircleCountdown(3);
@@ -474,7 +479,7 @@ export const GameBoard = () => {
                 id={circle.id}
                 position={{ x: 50, y: 50 }}
                 number={circle.number}
-                size={121.5}
+                size={CIRCLE_SIZE}
                 highlight={pressedCircles.has(circle.id) || circleWinner === circle.id}
               />
             </div>
@@ -521,7 +526,11 @@ export const GameBoard = () => {
         </button>
       </div>
       {showSettings && (
-        <SettingsPage onBack={() => setShowSettings(false)} />
+        <SettingsPage
+          onBack={() => setShowSettings(false)}
+          numCircles={numCircles}
+          setNumCircles={setNumCircles}
+        />
       )}
       {showInstructions && (
         <InstructionsPage onBack={() => setShowInstructions(false)} />

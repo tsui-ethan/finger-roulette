@@ -9,9 +9,11 @@ import { ArrowLeft, Volume2, VolumeX, RotateCcw, Clock } from "lucide-react";
 
 interface SettingsPageProps {
   onBack: () => void;
+  numCircles: number;
+  setNumCircles: (n: number) => void;
 }
 
-export const SettingsPage = ({ onBack }: SettingsPageProps) => {
+export const SettingsPage = ({ onBack, numCircles, setNumCircles }: SettingsPageProps) => {
   const { resetInterval, setResetInterval, resetLog, lastResetDate } = useGameLog();
   const { isMuted, toggleMute } = useAudio();
 
@@ -154,6 +156,36 @@ export const SettingsPage = ({ onBack }: SettingsPageProps) => {
                     <li>• <strong>Monthly:</strong> Counts reset at the start of each month</li>
                   </ul>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Game Mode 2: Number of Circles */}
+            <Card className="bg-white/10 border-white/20 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  🎯 Game Mode 2: Number of Circles
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <Label className="text-white text-base">Circles</Label>
+                  <button
+                    className="px-3 py-1 bg-blue-700 text-white rounded-full text-lg font-bold disabled:opacity-50"
+                    onClick={() => setNumCircles(Math.max(2, numCircles - 1))}
+                    disabled={numCircles <= 2}
+                  >
+                    -
+                  </button>
+                  <span className="text-2xl text-white w-8 text-center">{numCircles}</span>
+                  <button
+                    className="px-3 py-1 bg-blue-700 text-white rounded-full text-lg font-bold"
+                    onClick={() => setNumCircles(Math.min(20, numCircles + 1))}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="text-xs text-gray-300">Choose between 2 and 20 circles for game mode 2.</div>
+                <div className="text-xs text-yellow-300 font-semibold">8 circles is recommended for best experience.</div>
               </CardContent>
             </Card>
 
