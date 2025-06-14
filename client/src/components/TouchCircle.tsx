@@ -6,10 +6,11 @@ interface TouchCircleProps {
   number: number;
   size: number;
   highlight?: boolean;
+  borderColor?: string;
+  borderWidth?: number;
 }
 
-export const TouchCircle = ({ id, position, number, size, highlight }: TouchCircleProps) => {
-  // Only highlight if highlight is true (clicked) and ONLY in gameMode 2 (handled by parent)
+export const TouchCircle = ({ id, position, number, size, highlight, borderColor, borderWidth }: TouchCircleProps) => {
   return (
     <div
       className="absolute rounded-full flex items-center justify-center font-bold transform -translate-x-1/2 -translate-y-1/2 select-none"
@@ -24,9 +25,9 @@ export const TouchCircle = ({ id, position, number, size, highlight }: TouchCirc
         touchAction: 'none',
         userSelect: 'none',
         background: highlight ? '#f6e05e' : 'rgba(255, 221, 51, 0.15)',
-        border: 'none',
+        border: borderColor ? `${borderWidth || 4}px solid ${borderColor}` : 'none',
         boxShadow: 'none',
-        transition: 'background 0.2s',
+        transition: 'background 0.2s, border-color 0.2s',
       }}
       aria-label={`Touch circle ${number}`}
       role="button"
