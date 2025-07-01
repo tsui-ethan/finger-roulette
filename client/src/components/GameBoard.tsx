@@ -59,9 +59,12 @@ export const GameBoard = () => {
 
   useEffect(() => {
     const pointerCount = pointers.size;
+    // Start countdown only when the first finger is placed, and do not restart if more join
     if (
-      prevPointerCount.current === 0 && pointerCount > 0 &&
-      !countdownInProgress.current
+      pointerCount > 0 && // any pointer present
+      !countdownInProgress.current &&
+      selectionState.selectedId === null &&
+      !selectionState.selecting
     ) {
       countdownInProgress.current = true;
       setSelectionState({ selecting: true, selectedId: null, countdown: 3 });
@@ -101,7 +104,7 @@ export const GameBoard = () => {
         }, 0);
       }, 3000);
     }
-    // Only reset selection state if not currently selecting (i.e., before countdown starts)
+    // Only reset selection state and clear intervals/timeouts if not currently selecting (i.e., before countdown starts)
     if (pointerCount === 0 && !countdownInProgress.current && selectionState.selectedId === null) {
       setSelectionState({ selecting: false, selectedId: null, countdown: 3 });
       setWinnerInfo(null);
@@ -114,13 +117,9 @@ export const GameBoard = () => {
       prevPointerSet.current = Array.from(pointers.values());
     }
     prevPointerCount.current = pointerCount;
-    // Only clear intervals/timeouts on unmount
-    return () => {
-      if (selectionTimeout.current) clearTimeout(selectionTimeout.current);
-      if (countdownInterval.current) clearInterval(countdownInterval.current);
-      if (winnerTimeout.current) clearTimeout(winnerTimeout.current);
-      countdownInProgress.current = false;
-    };
+    // Only clear intervals/timeouts on unmount (not on every pointer change)
+    // DO NOT clear intervals/timeouts here, or the timer will stop when more users join
+    return () => {};
   }, [pointers.size]);
 
   useEffect(() => {
@@ -353,8 +352,9 @@ export const GameBoard = () => {
       {/* Show pointer mode circles */}
       {gameMode === 'pointer' && (
         Array.from(pointers.values()).map((pointer: any) => {
-          // Always render the winner's circle at the winner's last position
+          // Only show the winner's circle after selection
           const isWinner = selectionState.selectedId === pointer.id && winnerInfo;
+          if (selectionState.selectedId !== null && !isWinner) return null;
           const x = isWinner ? (winnerInfo!.x / window.innerWidth) * 100 : (pointer.x / window.innerWidth) * 100;
           const y = isWinner ? (winnerInfo!.y / window.innerHeight) * 100 : (pointer.y / window.innerHeight) * 100;
           return (
@@ -519,6 +519,29 @@ export const GameBoard = () => {
       {showInstructions && (
         <InstructionsPage onBack={() => setShowInstructions(false)} />
       )}
+      {/* --- Force landscape on mobile --- */}
+      <div className="fixed inset-0 bg-black z-50" style={{ display: gameMode === 'circle' ? 'none' : 'block' }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+          <h2 className="text-3xl font-bold text-white mb-4 text-center">
+            For the best experience, please use landscape mode
+          </h2>
+          <p className="text-lg text-white mb-8 text-center">
+            This game is optimized for landscape orientation. Rotate your device to continue playing.
+          </p>
+          <button
+            onClick={() => {
+              const el = document.documentElement;
+              const requestMethod = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+              if (requestMethod) {
+                requestMethod.call(el);
+              }
+            }}
+            className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+          >
+            Enable Fullscreen
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
