@@ -197,7 +197,10 @@ export const GameBoard = () => {
 
   // --- Circle mode preset positions ---
   const [numCircles, setNumCircles] = useState(8); // was: const NUM_CIRCLES = 8;
-  const CIRCLE_RADIUS = 243; // px (increased by 35%)
+  // Mobile scale factor for circle mode
+  const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const CIRCLE_SCALE = gameMode === 'circle' && isMobile ? 0.5 : 1;
+  const CIRCLE_RADIUS = 243 * CIRCLE_SCALE; // px (increased by 35%)
   const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   useEffect(() => {
     const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -378,9 +381,9 @@ export const GameBoard = () => {
           <div
             style={{
               position: 'absolute',
-              left: `${CIRCLE_CENTER_X}px`,
-              top: `${CIRCLE_CENTER_Y}px`,
-              transform: 'translate(-50%, -50%)',
+              left: CIRCLE_CENTER_X + 'px',
+              top: CIRCLE_CENTER_Y + 'px',
+              transform: `translate(-50%, -50%) scale(${CIRCLE_SCALE})`,
               zIndex: 30,
             }}
           >
@@ -450,9 +453,9 @@ export const GameBoard = () => {
               key={circle.id}
               style={{
                 position: 'absolute',
-                left: `${circle.x}px`,
-                top: `${circle.y}px`,
-                transform: 'translate(-50%, -50%)',
+                left: circle.x + 'px',
+                top: circle.y + 'px',
+                transform: `translate(-50%, -50%) scale(${CIRCLE_SCALE})`,
                 zIndex: 20,
                 cursor: 'pointer',
                 transition: 'box-shadow 0.2s, background 0.2s',
@@ -463,7 +466,7 @@ export const GameBoard = () => {
                 id={circle.id}
                 position={{ x: 50, y: 50 }}
                 number={circle.number}
-                size={121.5}
+                size={121.5 * CIRCLE_SCALE}
                 highlight={pressedCircles.has(circle.id) || circleWinner === circle.id}
               />
             </div>
@@ -476,40 +479,35 @@ export const GameBoard = () => {
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Switch Game Mode"
-          onClick={() => setGameMode((g) => g === "pointer" ? "circle" : "pointer")}
-          onTouchStart={e => { e.preventDefault(); setGameMode((g) => g === "pointer" ? "circle" : "pointer"); }}
+          onClick={e => { e.preventDefault(); setGameMode((g) => g === "pointer" ? "circle" : "pointer"); }}
         >
           <span role="img" aria-label="switch">⇄</span>
         </button>
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Settings"
-          onClick={() => setShowSettings(true)}
-          onTouchStart={e => { e.preventDefault(); setShowSettings(true); }}
+          onClick={e => { e.preventDefault(); setShowSettings(true); }}
         >
           <span role="img" aria-label="settings">⚙️</span>
         </button>
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Restart"
-          onClick={resetGame}
-          onTouchStart={e => { e.preventDefault(); resetGame(); }}
+          onClick={e => { e.preventDefault(); resetGame(); }}
         >
           <span role="img" aria-label="restart">🔄</span>
         </button>
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Instructions"
-          onClick={() => setShowInstructions(true)}
-          onTouchStart={e => { e.preventDefault(); setShowInstructions(true); }}
+          onClick={e => { e.preventDefault(); setShowInstructions(true); }}
         >
           <span role="img" aria-label="instructions">❓</span>
         </button>
         <button
           className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-lg shadow"
           title="Mute/Unmute"
-          onClick={audio.toggleMute}
-          onTouchStart={e => { e.preventDefault(); audio.toggleMute(); }}
+          onClick={e => { e.preventDefault(); audio.toggleMute(); }}
         >
           <span role="img" aria-label="mute">{audio.isMuted ? '🔇' : '🔊'}</span>
         </button>
