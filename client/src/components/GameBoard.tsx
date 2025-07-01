@@ -351,37 +351,26 @@ export const GameBoard = () => {
         ))}
       </div>
       {/* Show pointer mode circles */}
-      {gameMode === 'pointer' && selectionState.selectedId === null && !winnerInfo
-        ? Array.from(pointers.values()).map((pointer: any) => (
+      {gameMode === 'pointer' && (
+        Array.from(pointers.values()).map((pointer: any) => {
+          // Always render the winner's circle at the winner's last position
+          const isWinner = selectionState.selectedId === pointer.id && winnerInfo;
+          const x = isWinner ? (winnerInfo!.x / window.innerWidth) * 100 : (pointer.x / window.innerWidth) * 100;
+          const y = isWinner ? (winnerInfo!.y / window.innerHeight) * 100 : (pointer.y / window.innerHeight) * 100;
+          return (
             <TouchCircle
               key={pointer.id}
               id={pointer.id}
-              position={{
-                x: (pointer.x / window.innerWidth) * 100,
-                y: (pointer.y / window.innerHeight) * 100
-              }}
+              position={{ x, y }}
               number={pointer.number}
-              size={90}
-              borderColor="#fb923c" // orange-400
-              borderWidth={6}
-              highlight={false}
+              size={isWinner ? 160 : 90}
+              borderColor={isWinner ? "#fde047" : "#fb923c"}
+              borderWidth={isWinner ? 8 : 6}
+              highlight={!!isWinner}
             />
-          ))
-        : gameMode === 'pointer' && winnerInfo && (
-            <TouchCircle
-              key={"winner"}
-              id={-999}
-              position={{
-                x: (winnerInfo.x / window.innerWidth) * 100,
-                y: (winnerInfo.y / window.innerHeight) * 100
-              }}
-              number={winnerInfo.number}
-              size={160}
-              borderColor="#fde047" // yellow-300
-              borderWidth={8}
-              highlight={true}
-            />
-          )}
+          );
+        })
+      )}
       {/* Show circle mode preset circles */}
       {gameMode === 'circle' && (
         <>
