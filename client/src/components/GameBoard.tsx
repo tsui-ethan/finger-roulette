@@ -519,29 +519,31 @@ export const GameBoard = () => {
       {showInstructions && (
         <InstructionsPage onBack={() => setShowInstructions(false)} />
       )}
-      {/* --- Force landscape on mobile --- */}
-      <div className="fixed inset-0 bg-black z-50" style={{ display: gameMode === 'circle' ? 'none' : 'block' }}>
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-          <h2 className="text-3xl font-bold text-white mb-4 text-center">
-            For the best experience, please use landscape mode
-          </h2>
-          <p className="text-lg text-white mb-8 text-center">
-            This game is optimized for landscape orientation. Rotate your device to continue playing.
-          </p>
-          <button
-            onClick={() => {
-              const el = document.documentElement;
-              const requestMethod = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
-              if (requestMethod) {
-                requestMethod.call(el);
-              }
-            }}
-            className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
-          >
-            Enable Fullscreen
-          </button>
-        </div>
-      </div>
+      {/* --- Force landscape on mobile only --- */}
+      {typeof window !== 'undefined' && typeof navigator !== 'undefined' &&
+        /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) && (
+          <div className="fixed inset-0 bg-black z-50" style={{ display: gameMode === 'circle' ? 'none' : (window.innerWidth < window.innerHeight ? 'block' : 'none') }}>
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+              <h2 className="text-3xl font-bold text-white mb-4 text-center">
+                For the best experience, please use landscape mode
+              </h2>
+              <p className="text-lg text-white mb-8 text-center">
+                This game is optimized for landscape orientation. Rotate your device to continue playing.
+              </p>
+              <button
+                onClick={() => {
+                  const el = document.documentElement;
+                  if (el.requestFullscreen) {
+                    el.requestFullscreen();
+                  }
+                }}
+                className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300"
+              >
+                Enable Fullscreen
+              </button>
+            </div>
+          </div>
+        )}
     </div>
   );
 };
